@@ -40,17 +40,15 @@ class FBB:
     def sign(self,sk,m):
         # 输入类型检测,要求m属于Zp
         try:
-            m = int(m)
+            m = Bn.from_decimal(str(m))
             if m < 0 or m > self.p:  # if not a positive int print message and ask for input again
                 print("m is out of range, please ensure m to be an integer in [0,p)")
         except ValueError:
             print("m is not an int, please ensure m to be an integer in [0,p)")
         # while语句使得x + r*y + m != 0
         while self.x + self.r * self.y + m == 0:
-            self.r = Bn(self.p).random()
-       
-        
-        self.theta_prime = (Bn(int(self.x + self.r * self.y + m)).mod_inverse(self.G.order())) * self.g1
+            self.r = Bn().from_decimal(str(self.p)).random()
+        self.theta_prime = (Bn.from_decimal(str(self.x + self.r * self.y + m)).mod_inverse(self.G.order())) * self.g1
         theta = (self.theta_prime, self.r)
         return theta
 
@@ -63,9 +61,8 @@ class FBB:
  
 
 if __name__ == "__main__":
-    p = 20011
-    # m 属于Zp
-    m = 1679
+    p = Bn.get_prime(100)
+    m = p.random()
     fbb = FBB(p,m)
     (sk,vk) = fbb.keygen(p)
     print(sk,vk)

@@ -18,7 +18,7 @@ class BLS:
         print("G的order为",self.G.order())
 
     def keygen(self,p):
-        self.x = Bn(self.p).random()
+        self.x = Bn().from_decimal(str(self.p)).random()
         self.X = self.x * self.g2
         sk = self.x
         vk = self.X
@@ -27,7 +27,7 @@ class BLS:
     def sign(self,sk,m):
         # 输入类型检测,要求m属于Zp
         try:
-            m = int(m)
+            m = Bn.from_decimal(str(m))
             if m < 0 or m > self.p:  # if not a positive int print message and ask for input again
                 print("m is out of range, please ensure m to be an integer in [0,p)")
         except ValueError:
@@ -44,8 +44,8 @@ class BLS:
 
 
 if __name__ == "__main__":
-    p = 1000000000039
-    m = 987654321
+    p = Bn.get_prime(100)
+    m = p.random()
     bls = BLS(p,m)
     # 测试产生公钥私钥函数正确性
     (sk,vk) = bls.keygen(p)

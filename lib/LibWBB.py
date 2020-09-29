@@ -49,8 +49,8 @@ class WBB:
 
 
 if __name__ == "__main__":
-    p = 1000000000039
-    m = 987654321
+    p = Bn.get_prime(100)
+    m = p.random()
     wbb = WBB(p,m)
     # 测试产生公钥私钥函数正确性
     (sk,vk) = wbb.keygen(p)
