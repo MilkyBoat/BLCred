@@ -3,9 +3,8 @@ from petlib.ec import EcGroup, EcPt
 from bplib import bp
 
 
-# 怎么体现G1，G2，GT的阶为质数p
-class WBB:
-    
+class WBB: 
+
     def __init__(self,p,m):
         self.G = bp.BpGroup()
         # g1, g2 分别是G1，G2的生成元
@@ -13,7 +12,7 @@ class WBB:
         # x,X 分别是私钥和公钥
         self.x = 0
         self.X = 0
-        # p,m是传入的参数，p为传入的大质数，使得G1，G2，GT的阶为质数p，m是传入的消息，属于Zp
+        # p,m是传入的参数，p为传入的大质数，G1，G2，GT的阶为质数p2，m是传入的消息，属于Zp,
         self.p = p
         self.m = m
 
@@ -32,7 +31,7 @@ class WBB:
         # while语句使得x + r*y + m != 0
         if self.x + m == 0:
             print("x有问题")
-        theta = ((self.x + m) * self.g1).neg()
+        theta = Bn(self.x+m).mod_inverse() * self.g1
         return theta
 
     # 验证签名
