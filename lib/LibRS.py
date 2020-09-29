@@ -38,7 +38,7 @@ class RS:
         sigma1 = r * self.G.gen2()
         e = sk[0]
         for i in range(self.n):
-            e += sk[i][i] * m[i]
+            e += sk[1][i] * m[i]
         sigma2 = e * sigma1
         return [self.G.gen1, self.G.gen1, sigma1, sigma2]
 
@@ -68,8 +68,8 @@ class RS:
                 temp_z = temp_z - self.G.gen1()
                 temp_z = m[j] * temp_z
                 sigma2_ += temp_z
-        sigma1__ = r * sigma1_
-        sigma2__ = r * sigma2_
+        sigma1__ = r * sigma[2]
+        sigma2__ = r * sigma[3] + t * sigma[2]
         return [sigma1_, sigma2_, sigma1__, sigma2__]
 
     def verify(self, vk, sigma, m, D):
