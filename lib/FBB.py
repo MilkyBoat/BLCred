@@ -1,7 +1,8 @@
 from petlib.bn import Bn
 from petlib.ec import EcGroup, EcPt
 from bplib import bp
-
+# 计时函数
+import time
 
 # 怎么体现G1，G2，GT的阶为质数p
 class FBB:
@@ -47,7 +48,9 @@ class FBB:
         # while语句使得x + r*y + m != 0
         while self.x + self.r * self.y + m == 0:
             self.r = Bn(self.p).random()
-        self.theta_prime = ((self.x + self.r * self.y + m) * self.g1).neg()
+       
+        
+        self.theta_prime = (Bn(int(self.x + self.r * self.y + m)).mod_inverse(self.G.order())) * self.g1
         theta = (self.theta_prime, self.r)
         return theta
 
@@ -55,15 +58,14 @@ class FBB:
     def verify(self,vk,m,theta):
         self.theta_prime = theta[0]
         self.r = theta[1]
-        # return self.G.pair(theta_prime, self.X) * self.G.pair(theta_prime, (self.r * self.Y)) * self.G.pair(theta_prime, (m * self.g2)) == self.G.pair(self.g1, self.g2)
         return self.G.pair(self.theta_prime, self.X + (self.r * self.Y) + (m * self.g2)) == self.G.pair(self.g1, self.g2)
 
  
 
 if __name__ == "__main__":
-    p = 199
+    p = 20011
     # m 属于Zp
-    m = 500
+    m = 1679
     fbb = FBB(p,m)
     (sk,vk) = fbb.keygen(p)
     print(sk,vk)

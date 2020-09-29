@@ -1,6 +1,8 @@
 from petlib.bn import Bn
 from petlib.ec import EcGroup, EcPt
 from bplib import bp
+# 计时函数
+import time
 
 class BLS:
     
@@ -42,12 +44,29 @@ class BLS:
 
 
 if __name__ == "__main__":
-    p = 19999
-    m = 123
+    p = 1000000000039
+    m = 987654321
     bls = BLS(p,m)
+    # 测试产生公钥私钥函数正确性
     (sk,vk) = bls.keygen(p)
     print(sk,vk)
+     # 测试生成签名函数正确性
     theta = bls.sign(sk,m)
     print(theta)
+    # 测量生成签名函数执行时间
+    total_time=0
+    for i in range(10000):
+        start = time.clock()
+        bls.sign(sk,m)
+        total_time += time.clock() - start
+    print("BLS生成签名时间为",total_time/10000)
+    # 测试验证签名函数正确性
     verify = bls.verify(vk,m,theta)
     print(verify)
+    # 测量验证签名函数执行时间
+    total_time=0
+    for i in range(10000):
+        start = time.clock()
+        bls.verify(vk,m,theta)
+        total_time += time.clock() - start
+    print("BLS验证时间为",total_time/10000)
