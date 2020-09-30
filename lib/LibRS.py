@@ -73,15 +73,15 @@ class RS:
         return [sigma1_, sigma2_, sigma1__, sigma2__]
 
     def verify(self, vk, sigma, m, D):
-        expe1_1 = vk[0] + sigma[0]
-        expe1_2 = self.G.gen2()
+        expr1_1 = vk[0] + sigma[0]
+        expr1_2 = self.G.gen2()
         for i in D:
-            expe1_1 = expe1_1 + m[i-1] * vk[1][i-1]
-            expe1_2 = expe1_2 + vk[2][i-1]
-        expe1_2 = expe1_2 - self.G.gen2()
-        expe2_1 = self.G.pair(expe1_1, sigma[2]) == self.G.pair(self.G.gen1(), sigma[3])
-        expe2_2 = self.G.pair(sigma[0], expe1_2) == self.G.pair(sigma[1], self.G.gen2())
-        if expe2_1 and expe2_2 :
+            expr1_1 = expr1_1 + m[i-1] * vk[1][i-1]
+            expr1_2 = expr1_2 + vk[2][i-1]
+        expr1_2 = expr1_2 - self.G.gen2()
+        expr2_1 = self.G.pair(expr1_1, sigma[2]) == self.G.pair(self.G.gen1(), sigma[3])
+        expr2_2 = self.G.pair(sigma[0], expr1_2) == self.G.pair(sigma[1], self.G.gen2())
+        if expr2_1 and expr2_2 :
             return True
         return False
 
@@ -100,11 +100,11 @@ if __name__ == "__main__":
     print("result of Redactable Signatures: ", result)
 
 
-# expe1_1 = vk[0] + sigma_d[0]
-# expe1_2 = rs.G.gen2()
+# expr1_1 = vk[0] + sigma_d[0]
+# expr1_2 = rs.G.gen2()
 # for i in D:
-#     expe1_1 = expe1_1 + m[i-1] * vk[1][i-1]
-#     expe1_2 = expe1_2 + vk[2][i-1]
-# expe1_2 = expe1_2 - rs.G.gen2()
-# expe2_1 = rs.G.pair(expe1_1, sigma_d[2]) == rs.G.pair(rs.G.gen1(), sigma_d[3])
-# expe2_2 = rs.G.pair(sigma_d[0], expe1_2) == rs.G.pair(sigma_d[1], rs.G.gen2())
+#     expr1_1 = expr1_1 + m[i-1] * vk[1][i-1]
+#     expr1_2 = expr1_2 + vk[2][i-1]
+# expr1_2 = expr1_2 - rs.G.gen2()
+# expr2_1 = rs.G.pair(expr1_1, sigma_d[2]) == rs.G.pair(rs.G.gen1(), sigma_d[3])
+# expr2_2 = rs.G.pair(sigma_d[0], expr1_2) == rs.G.pair(sigma_d[1], rs.G.gen2())
