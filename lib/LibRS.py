@@ -45,7 +45,7 @@ class RS:
 
     def derive(self, vk, m, D, sigma):
         D = set(D)
-        universal = set(range(self.n))
+        universal = set(range(1, self.n+1))
         D_ = universal - D
 
         t = Bn.from_decimal(str(self.p)).random()
@@ -55,16 +55,16 @@ class RS:
         if len(D_) != 0: # if _D_ is not empty 
             sigma1_ = t * self.G.gen1()
             for j in D_:
-                sigma1_ = sigma1_ + m[j] * vk[1][j]
+                sigma1_ = sigma1_ + m[j] * vk[1][j-1]
             for i in D:
-                sigma2_ = sigma2_ + vk[1][i]
+                sigma2_ = sigma2_ + vk[1][i-1]
             # minus initial value of sigma
             sigma2_ = sigma2_ - self.G.gen1() 
             sigma2_ = t * sigma2_
             for j in D_:
                 temp_z = self.G.gen1()
                 for i in D:
-                    temp_z = temp_z + vk[3][(i+1)*(j+1)]
+                    temp_z = temp_z + vk[3][i*j]
                 temp_z = temp_z - self.G.gen1()
                 temp_z = m[j] * temp_z
                 sigma2_ += temp_z
@@ -76,8 +76,8 @@ class RS:
         expe1_1 = vk[0] + sigma[0]
         expe1_2 = self.G.gen2()
         for i in D:
-            expe1_1 = expe1_1 + m[i] * vk[1][i]
-            expe1_2 = expe1_2 + vk[2][i]
+            expe1_1 = expe1_1 + m[i-1] * vk[1][i-1]
+            expe1_2 = expe1_2 + vk[2][i-1]
         expe1_2 = expe1_2 - self.G.gen2()
         expe2_1 = self.G.pair(expe1_1, sigma[2]) == self.G.pair(self.G.gen1(), sigma[3])
         expe2_2 = self.G.pair(sigma[0], expe1_2) == self.G.pair(sigma[1], self.G.gen2())
@@ -89,7 +89,8 @@ class RS:
 # test
 if __name__ == "__main__":
     m = [1, 2, 3, 4, 5, 6]
-    D = set([1, 3, 4])
+    # D = set([1, 3, 4])
+    D = set([1, 2, 3, 4, 5, 6])
 
     rs = RS()
     sk, vk = rs.keygen(6)
@@ -98,3 +99,12 @@ if __name__ == "__main__":
     result = rs.verify(vk, sigma_d, m, D)
     print("result of Redactable Signatures: ", result)
 
+
+# expe1_1 = vk[0] + sigma_d[0]
+# expe1_2 = rs.G.gen2()
+# for i in D:
+#     expe1_1 = expe1_1 + m[i-1] * vk[1][i-1]
+#     expe1_2 = expe1_2 + vk[2][i-1]
+# expe1_2 = expe1_2 - rs.G.gen2()
+# expe2_1 = rs.G.pair(expe1_1, sigma_d[2]) == rs.G.pair(rs.G.gen1(), sigma_d[3])
+# expe2_2 = rs.G.pair(sigma_d[0], expe1_2) == rs.G.pair(sigma_d[1], rs.G.gen2())
