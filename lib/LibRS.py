@@ -40,7 +40,7 @@ class RS:
         for i in range(self.n):
             e += sk[1][i] * m[i]
         sigma2 = e * sigma1
-        return [self.G.gen1, self.G.gen1, sigma1, sigma2]
+        return [self.G.gen1(), self.G.gen1(), sigma1, sigma2]
 
 
     def derive(self, vk, m, D, sigma):
@@ -50,17 +50,13 @@ class RS:
 
         t = Bn.from_decimal(str(self.p)).random()
         r = Bn.from_decimal(str(self.p)).random()
-        sigma1_ = self.G.gen1()
-        sigma2_ = self.G.gen1()
+        sigma1_ = t * self.G.gen1()
+        sigma2_ = t * self.G.gen1()
         if len(D_) != 0: # if _D_ is not empty 
-            sigma1_ = t * self.G.gen1()
             for j in D_:
                 sigma1_ = sigma1_ + m[j] * vk[1][j-1]
             for i in D:
                 sigma2_ = sigma2_ + vk[1][i-1]
-            # minus initial value of sigma
-            sigma2_ = sigma2_ - self.G.gen1() 
-            sigma2_ = t * sigma2_
             for j in D_:
                 temp_z = self.G.gen1()
                 for i in D:
@@ -69,7 +65,7 @@ class RS:
                 temp_z = m[j] * temp_z
                 sigma2_ += temp_z
         sigma1__ = r * sigma[2]
-        sigma2__ = r * sigma[3] + t * sigma[2]
+        sigma2__ = r * (sigma[3] + t * sigma[2])
         return [sigma1_, sigma2_, sigma1__, sigma2__]
 
     def verify(self, vk, sigma, m, D):
@@ -100,11 +96,11 @@ if __name__ == "__main__":
     print("result of Redactable Signatures: ", result)
 
 
-# expr1_1 = vk[0] + sigma_d[0]
-# expr1_2 = rs.G.gen2()
-# for i in D:
-#     expr1_1 = expr1_1 + m[i-1] * vk[1][i-1]
-#     expr1_2 = expr1_2 + vk[2][i-1]
-# expr1_2 = expr1_2 - rs.G.gen2()
-# expr2_1 = rs.G.pair(expr1_1, sigma_d[2]) == rs.G.pair(rs.G.gen1(), sigma_d[3])
-# expr2_2 = rs.G.pair(sigma_d[0], expr1_2) == rs.G.pair(sigma_d[1], rs.G.gen2())
+expr1_1 = vk[0]
+expr1_2 = rs.G.gen2()
+for i in D:
+    expr1_1 = expr1_1 + m[i-1] * vk[1][i-1]
+    expr1_2 = expr1_2 + vk[2][i-1]
+expr1_2 = expr1_2 - rs.G.gen2()
+expr2_1 = rs.G.pair(expr1_1, sigma_d[2]) == rs.G.pair(rs.G.gen1(), sigma_d[3])
+expr2_2 = rs.G.pair(sigma_d[0], expr1_2) == rs.G.pair(sigma_d[1], rs.G.gen2())
