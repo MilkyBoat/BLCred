@@ -40,7 +40,7 @@ class RS:
         for i in range(self.n):
             e += sk[1][i] * m[i]
         sigma2 = e * sigma1
-        return [self.G.gen1(), self.G.gen1(), sigma1, sigma2]
+        return [bp.G1Elem.inf(self.G), bp.G1Elem.inf(self.G), sigma1, sigma2]
 
 
     def derive(self, vk, m, D, sigma):
@@ -50,31 +50,37 @@ class RS:
 
         t = Bn.from_decimal(str(self.p)).random()
         r = Bn.from_decimal(str(self.p)).random()
-        sigma1_ = t * self.G.gen1()
-        sigma2_ = t * self.G.gen1()
+        sigma1_ = bp.G1Elem.inf(self.G)
+        sigma2_ = bp.G1Elem.inf(self.G)
         if len(D_) != 0: # if _D_ is not empty 
+            sigma1_ = sigma1_ + t * self.G.gen1()
             for j in D_:
-                sigma1_ = sigma1_ + m[j] * vk[1][j-1]
+                sigma1_ = sigma1_ + m[j-1] * vk[1][j-1]
             for i in D:
                 sigma2_ = sigma2_ + vk[1][i-1]
+            sigma2_ = t * sigma2_
             for j in D_:
                 temp_z = self.G.gen1()
                 for i in D:
                     temp_z = temp_z + vk[3][i*j]
                 temp_z = temp_z - self.G.gen1()
-                temp_z = m[j] * temp_z
+                temp_z = m[j-1] * temp_z
                 sigma2_ += temp_z
+        else:
+            sigma1_ = t * self.G.gen1()
+            for i in range(self.n):
+                sigma2_ += t * vk[1][i]
+        
         sigma1__ = r * sigma[2]
         sigma2__ = r * (sigma[3] + t * sigma[2])
         return [sigma1_, sigma2_, sigma1__, sigma2__]
 
     def verify(self, vk, sigma, m, D):
         expr1_1 = vk[0] + sigma[0]
-        expr1_2 = self.G.gen2()
+        expr1_2 = bp.G2Elem.inf(self.G)
         for i in D:
             expr1_1 = expr1_1 + m[i-1] * vk[1][i-1]
             expr1_2 = expr1_2 + vk[2][i-1]
-        expr1_2 = expr1_2 - self.G.gen2()
         expr2_1 = self.G.pair(expr1_1, sigma[2]) == self.G.pair(self.G.gen1(), sigma[3])
         expr2_2 = self.G.pair(sigma[0], expr1_2) == self.G.pair(sigma[1], self.G.gen2())
         if expr2_1 and expr2_2 :
@@ -85,8 +91,8 @@ class RS:
 # test
 if __name__ == "__main__":
     m = [1, 2, 3, 4, 5, 6]
-    # D = set([1, 3, 4])
-    D = set([1, 2, 3, 4, 5, 6])
+    D = set([1, 3, 4])
+    # D = set([1, 2, 3, 4, 5, 6])
 
     rs = RS()
     sk, vk = rs.keygen(6)
@@ -96,11 +102,22 @@ if __name__ == "__main__":
     print("result of Redactable Signatures: ", result)
 
 
-expr1_1 = vk[0]
-expr1_2 = rs.G.gen2()
+expr1_1 = vk[0] + sigma_d[0]
+expr1_2 = bp.G2Elem.inf(rs.G)
 for i in D:
     expr1_1 = expr1_1 + m[i-1] * vk[1][i-1]
     expr1_2 = expr1_2 + vk[2][i-1]
-expr1_2 = expr1_2 - rs.G.gen2()
 expr2_1 = rs.G.pair(expr1_1, sigma_d[2]) == rs.G.pair(rs.G.gen1(), sigma_d[3])
 expr2_2 = rs.G.pair(sigma_d[0], expr1_2) == rs.G.pair(sigma_d[1], rs.G.gen2())
+print(expr2_1)
+print(expr2_2)
+
+expr1_1 = vk[0] + sigma[0]
+expr1_2 = bp.G2Elem.inf(rs.G)
+for i in D:
+    expr1_1 = expr1_1 + m[i-1] * vk[1][i-1]
+    expr1_2 = expr1_2 + vk[2][i-1]
+expr2_1 = rs.G.pair(expr1_1, sigma[2]) == rs.G.pair(rs.G.gen1(), sigma[3])
+expr2_2 = rs.G.pair(sigma[0], expr1_2) == rs.G.pair(sigma[1], rs.G.gen2())
+print(expr2_1)
+print(expr2_2)
