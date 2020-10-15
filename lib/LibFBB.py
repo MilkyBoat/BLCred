@@ -7,7 +7,7 @@ import time
 # 怎么体现G1，G2，GT的阶为质数p
 class FBB:
     
-    def __init__(self,p,m):
+    def __init__(self,p):
         self.G = bp.BpGroup()
         # g1, g2 分别是G1，G2的生成元
         self.g1, self.g2 = self.G.gen1(), self.G.gen2()
@@ -18,17 +18,16 @@ class FBB:
         self.Y = 0
         # p,m是传入的参数，p为传入的大质数，使得G1，G2，GT的阶为质数p，m是传入的消息，属于Zp
         self.p = p
-        self.m = m
         # r是theta中的一个元素，从消息空间Zp中随机获得（这里暂且先生成一个candidate，之后在sign函数中会进行筛选
-        self.r = Bn(self.p).random()
+        self.r = Bn().from_decimal(str(self.p)).random()
         self.theta_prime = 0
         print("G的order为",self.G.order())
 
     # 生成公钥和私钥
-    def keygen(self,p):
+    def keygen(self):
         # 调用petlib.bn中的Bn，生成两个[0,p)的随机数，作为私钥sk
-        self.x = Bn(self.p).random()
-        self.y = Bn(self.p).random()
+        self.x = Bn().from_decimal(str(self.p)).random()
+        self.y = Bn().from_decimal(str(self.p)).random()
         # 将私钥中两个元素x，y分别与g2做标量乘法
         self.X = self.x * self.g2
         self.Y = self.y * self.g2
@@ -63,8 +62,8 @@ class FBB:
 if __name__ == "__main__":
     p = Bn.get_prime(100)
     m = p.random()
-    fbb = FBB(p,m)
-    (sk,vk) = fbb.keygen(p)
+    fbb = FBB(p)
+    (sk,vk) = fbb.keygen()
     print(sk,vk)
     theta = fbb.sign(sk,m)
     print(theta)
