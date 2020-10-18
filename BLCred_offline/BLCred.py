@@ -1,10 +1,10 @@
 from petlib.bn import Bn
 from petlib.ec import EcGroup, EcPt
 from bplib import bp
-from LibRS import RS
-from LibNIZK import NIZK
-from LibFBB import FBB
-from LibBLS import BLS
+from lib.LibRS import RS
+from lib.LibNIZK import NIZK
+from lib.LibFBB import FBB
+from lib.LibBLS import BLS
 import hashlib
 
 
@@ -99,7 +99,7 @@ class BLCred:
         G = bp.BpGroup()
         g2 = G.gen2()
         Q = []
-        for i in range(n):
+        for _ in range(n):
             rand = p.random()
             Q.append(rand * g2)
         # (user) ObtainCommit
