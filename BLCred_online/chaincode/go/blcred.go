@@ -16,6 +16,11 @@ func (s *SmartContract) Init(APIstub shim.ChaincodeStubInterface) sc.Response {
 	return shim.Success(nil)
 }
 
+func (s *SmartContract) initLedger(APIstub shim.ChaincodeStubInterface) sc.Response {
+
+	return shim.Success(nil)
+}
+
 // setup()
 func (s *SmartContract) setup(APIstub shim.ChaincodeStubInterface) sc.Response {
 	return shim.Success(nil)
