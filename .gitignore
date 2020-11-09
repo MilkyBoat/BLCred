@@ -5,6 +5,7 @@
 *.pyc
 
 # Binaries for programs and plugins
+bin/
 *.exe
 *.exe~
 *.dll
@@ -18,4 +19,7 @@
 *.out
 
 # Dependency directories (remove the comment below to include it)
-# vendor/
+vendor/
+
+# temp file
+t__*
