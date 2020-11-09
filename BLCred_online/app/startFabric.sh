@@ -14,7 +14,7 @@ CC_SRC_LANGUAGE=${1:-"go"}
 CC_SRC_LANGUAGE=`echo "$CC_SRC_LANGUAGE" | tr [:upper:] [:lower:]`
 if [ "$CC_SRC_LANGUAGE" = "go" -o "$CC_SRC_LANGUAGE" = "golang"  ]; then
 	CC_RUNTIME_LANGUAGE=golang
-	CC_SRC_PATH=github.com/chaincode/fabcar/go
+	CC_SRC_PATH=github.com/chaincode/go
 elif [ "$CC_SRC_LANGUAGE" = "java" ]; then
 	CC_RUNTIME_LANGUAGE=java
 	CC_SRC_PATH=/opt/gopath/src/github.com/chaincode/fabcar/java
@@ -120,7 +120,13 @@ docker exec \
     --tlsRootCertFiles ${ORG2_TLS_ROOTCERT_FILE}
 set +x
 
+echo
+echo "----------------------------------------------------------------------"
 echo "Total setup execution time : "$(($(date +%s) - starttime))" secs ..."
+echo "----------------------------------------------------------------------"
+echo
+
+./testBLCred.sh
 
 # Next, use the FabCar applications to interact with the deployed FabCar contract.
 # The FabCar applications are available in multiple programming languages.

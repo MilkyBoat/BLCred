@@ -1,3 +1,5 @@
+module github.com/hyperledger/fabric/scripts/fabric-samples/chaincode/go
+
 go 1.13
 
 require (

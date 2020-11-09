@@ -24,7 +24,7 @@ function removeUnwantedImages() {
   fi
 }
 
-cd ../first-network
+cd ../script
 echo y | ./byfn.sh down
 clearContainers
 removeUnwantedImages
