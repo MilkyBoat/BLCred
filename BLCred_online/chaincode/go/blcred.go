@@ -74,6 +74,7 @@ func main() {
 	if test {
 		blsTest()
 		fbbTest()
+		wbbTest()
 		return
 	}
 
