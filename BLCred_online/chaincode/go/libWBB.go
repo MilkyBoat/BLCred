@@ -37,7 +37,6 @@ func (wbb *WBB) Sign(sk *big.Int, m string) *bn256.G1 {
 
 	if big.NewInt(0).Add(sk, msg) == big.NewInt(0) {
 		panic("This sk can`t be used to encrypt current message, please rerun kegen function")
-		return nil
 	}
 
 	exp := big.NewInt(0).ModInverse(msg.Add(msg, sk), bn256.Order)
