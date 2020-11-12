@@ -10,52 +10,47 @@ import (
 
 // BLS class
 type BLS struct {
-	Gg1 *bn256.G1
-	Gg2 *bn256.G2
-	P   *big.Int
-	SK  *big.Int
-	VK  *bn256.G2
-	H   *bn256.G1
+	P *big.Int
 }
 
 // Init (p)
 func (bls *BLS) Init(_p *big.Int) {
-	baseInt := big.NewInt(1)
-
-	bls.Gg1 = new(bn256.G1).ScalarBaseMult(baseInt)
-	bls.Gg2 = new(bn256.G2).ScalarBaseMult(baseInt)
-
-	bls.SK = big.NewInt(0)
-	bls.VK = new(bn256.G2)
 	bls.P = _p
-	bls.H = new(bn256.G1)
 }
 
 // Keygen ()
 func (bls *BLS) Keygen() (*big.Int, *bn256.G2) {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	bls.SK.Rand(r, bls.P)
-	bls.VK = new(bn256.G2).ScalarBaseMult(bls.SK)
-	return bls.SK, bls.VK
+	x := big.NewInt(0).Rand(r, bls.P)
+	X := new(bn256.G2).ScalarBaseMult(x)
+	return x, X
 }
 
 // Sign (sk, m)
-func (bls *BLS) Sign(sk *big.Int, m string) *bn256.G1 {
+func (bls *BLS) Sign(x *big.Int, m string) *bn256.G1 {
 
 	// string message to big number
 	msg := big.NewInt(0).SetBytes([]byte(m))
 
-	bls.H = new(bn256.G1).ScalarBaseMult(msg)
-	theta := new(bn256.G1).ScalarMult(bls.H, bls.SK)
+	h := new(bn256.G1).ScalarBaseMult(msg)
+	theta := new(bn256.G1).ScalarMult(h, x)
 
 	return theta
 }
 
-// Verify (vk, m, theta)
-func (bls *BLS) Verify(vk *bn256.G2, m string, theta *bn256.G1) bool {
-	// bn256.Pair has no "==" or euqle() function, 
+// Verify (vk, m, sigma)
+func (bls *BLS) Verify(X *bn256.G2, m string, sigma *bn256.G1) bool {
+
+	// string message to big number
+	msg := big.NewInt(0).SetBytes([]byte(m))
+	h := new(bn256.G1).ScalarBaseMult(msg)
+
+	// bn256.Pair has no "==" or euqle() function,
 	// gt struct need to be serialized before determine whether equle
-	return bn256.Pair(theta, bls.Gg2).String() == bn256.Pair(bls.H, bls.VK).String()
+	g2 := new(bn256.G2).ScalarBaseMult(big.NewInt(1))
+	left := bn256.Pair(sigma, g2).String()
+	right := bn256.Pair(h, X).String()
+	return left == right
 }
 
 func blsTest() {
@@ -65,8 +60,8 @@ func blsTest() {
 	bls.Init(p)
 	sk, vk := bls.Keygen()
 	// println(sk, vk)
-	theta := bls.Sign(sk, m)
-	// println(theta)
-	verify := bls.Verify(vk, m, theta)
-	println(verify)
+	sigma := bls.Sign(sk, m)
+	// println(sigma)
+	verify := bls.Verify(vk, m, sigma)
+	println("BLS test result: ", verify)
 }

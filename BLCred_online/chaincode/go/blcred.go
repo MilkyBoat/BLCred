@@ -73,6 +73,7 @@ func main() {
 
 	if test {
 		blsTest()
+		fbbTest()
 		return
 	}
 

@@ -10,52 +10,62 @@ import (
 
 // FBB class
 type FBB struct {
-	Gg1 *bn256.G1
-	Gg2 *bn256.G2
-	P   *big.Int
-	SK  *big.Int
-	VK  *bn256.G2
-	H   *bn256.G1
+	P *big.Int
 }
 
 // Init (p)
 func (fbb *FBB) Init(_p *big.Int) {
-	baseInt := big.NewInt(1)
-
-	fbb.Gg1 = new(bn256.G1).ScalarBaseMult(baseInt)
-	fbb.Gg2 = new(bn256.G2).ScalarBaseMult(baseInt)
-
-	fbb.SK = big.NewInt(0)
-	fbb.VK = new(bn256.G2)
 	fbb.P = _p
-	fbb.H = new(bn256.G1)
 }
 
 // Keygen ()
-func (fbb *FBB) Keygen() (*big.Int, *bn256.G2) {
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	fbb.SK.Rand(r, fbb.P)
-	fbb.VK = new(bn256.G2).ScalarBaseMult(fbb.SK)
-	return fbb.SK, fbb.VK
+func (fbb *FBB) Keygen() (*big.Int, *big.Int, *bn256.G2, *bn256.G2) {
+
+	r := rand.New(rand.NewSource(0))
+	r.Seed(time.Now().UnixNano())
+	x := big.NewInt(0).Rand(r, fbb.P)
+	X := new(bn256.G2).ScalarBaseMult(x)
+	r.Seed(time.Now().UnixNano())
+	y := big.NewInt(0).Rand(r, fbb.P)
+	Y := new(bn256.G2).ScalarBaseMult(y)
+
+	return x, y, X, Y
 }
 
 // Sign (sk, m)
-func (fbb *FBB) Sign(sk *big.Int, m string) *bn256.G1 {
+func (fbb *FBB) Sign(skx *big.Int, sky *big.Int, m string) (*bn256.G1, *big.Int) {
 
 	// string message to big number
 	msg := big.NewInt(0).SetBytes([]byte(m))
 
-	fbb.H = new(bn256.G1).ScalarBaseMult(msg)
-	theta := new(bn256.G1).ScalarMult(fbb.H, fbb.SK)
+	_r := rand.New(rand.NewSource(time.Now().UnixNano()))
+	t1 := big.NewInt(0)
+	t2 := big.NewInt(0)
+	r := big.NewInt(0).Rand(_r, fbb.P)
+	for t1.Add(t1.Add(skx, t2.Mul(r, sky)), msg) == big.NewInt(0) {
+		_r.Seed(time.Now().UnixNano())
+		r.Rand(_r, fbb.P)
+	}
+	t3 := big.NewInt(0).Div(big.NewInt(1), t1)
+	sigma := new(bn256.G1).ScalarBaseMult(t3)
 
-	return theta
+	return sigma, r
 }
 
-// Verify (vk, m, theta)
-func (fbb *FBB) Verify(vk *bn256.G2, m string, theta *bn256.G1) bool {
-	// bn256.Pair has no "==" or euqle() function,
-	// gt struct need to be serialized before determine whether equle
-	return bn256.Pair(theta, fbb.Gg2).String() == bn256.Pair(fbb.H, fbb.VK).String()
+// Verify (vkx, vky, m, sigma, r)
+func (fbb *FBB) Verify(vkx *bn256.G2, vky *bn256.G2, m string, sigma *bn256.G1, r *big.Int) bool {
+	// string message to big number
+	msg := big.NewInt(0).SetBytes([]byte(m))
+
+	g1 := new(bn256.G1).ScalarBaseMult(big.NewInt(1))
+	g2 := new(bn256.G2).ScalarBaseMult(big.NewInt(1))
+	t := new(bn256.G2)
+	t.ScalarMult(vky, r)
+	t.Add(vkx, t)
+	t.Add(t, new(bn256.G2).ScalarBaseMult(msg))
+	left := bn256.Pair(sigma, t).String()
+	right := bn256.Pair(g1, g2).String()
+	return left == right
 }
 
 func fbbTest() {
@@ -63,10 +73,10 @@ func fbbTest() {
 	p, _ := big.NewInt(0).SetString("1020831745583176952747469275099", 10)
 	fbb := new(FBB)
 	fbb.Init(p)
-	sk, vk := fbb.Keygen()
+	skx, sky, vkx, vky := fbb.Keygen()
 	// println(sk, vk)
-	theta := fbb.Sign(sk, m)
-	// println(theta)
-	verify := fbb.Verify(vk, m, theta)
-	println(verify)
+	sigma, r := fbb.Sign(skx, sky, m)
+	// println(sigma)
+	verify := fbb.Verify(vkx, vky, m, sigma, r)
+	println("FBB test result: ", verify)
 }
