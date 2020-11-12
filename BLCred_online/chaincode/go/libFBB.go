@@ -46,7 +46,7 @@ func (fbb *FBB) Sign(skx *big.Int, sky *big.Int, m string) (*bn256.G1, *big.Int)
 		_r.Seed(time.Now().UnixNano())
 		r.Rand(_r, fbb.P)
 	}
-	t3 := big.NewInt(0).Div(big.NewInt(1), t1)
+	t3 := big.NewInt(0).ModInverse(t1, bn256.Order)
 	sigma := new(bn256.G1).ScalarBaseMult(t3)
 
 	return sigma, r
@@ -57,12 +57,12 @@ func (fbb *FBB) Verify(vkx *bn256.G2, vky *bn256.G2, m string, sigma *bn256.G1, 
 	// string message to big number
 	msg := big.NewInt(0).SetBytes([]byte(m))
 
-	g1 := new(bn256.G1).ScalarBaseMult(big.NewInt(1))
-	g2 := new(bn256.G2).ScalarBaseMult(big.NewInt(1))
 	t := new(bn256.G2)
 	t.ScalarMult(vky, r)
 	t.Add(vkx, t)
 	t.Add(t, new(bn256.G2).ScalarBaseMult(msg))
+	g1 := new(bn256.G1).ScalarBaseMult(big.NewInt(1))
+	g2 := new(bn256.G2).ScalarBaseMult(big.NewInt(1))
 	left := bn256.Pair(sigma, t).String()
 	right := bn256.Pair(g1, g2).String()
 	return left == right
