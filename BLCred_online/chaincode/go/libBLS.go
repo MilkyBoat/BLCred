@@ -1,11 +1,11 @@
 package main
 
 import (
+	"crypto/md5"
+	"golang.org/x/crypto/bn256"
 	"math/big"
 	"math/rand"
 	"time"
-
-	"golang.org/x/crypto/bn256"
 )
 
 // BLS class
@@ -30,7 +30,8 @@ func (bls *BLS) Keygen() (*big.Int, *bn256.G2) {
 func (bls *BLS) Sign(x *big.Int, m string) *bn256.G1 {
 
 	// string message to big number
-	msg := big.NewInt(0).SetBytes([]byte(m))
+	hash := md5.New()
+	msg := big.NewInt(0).SetBytes(hash.Sum([]byte(m)))
 
 	h := new(bn256.G1).ScalarBaseMult(msg)
 	theta := new(bn256.G1).ScalarMult(h, x)
@@ -42,7 +43,8 @@ func (bls *BLS) Sign(x *big.Int, m string) *bn256.G1 {
 func (bls *BLS) Verify(X *bn256.G2, m string, sigma *bn256.G1) bool {
 
 	// string message to big number
-	msg := big.NewInt(0).SetBytes([]byte(m))
+	hash := md5.New()
+	msg := big.NewInt(0).SetBytes(hash.Sum([]byte(m)))
 	h := new(bn256.G1).ScalarBaseMult(msg)
 
 	// bn256.Pair has no "==" or euqle() function,

@@ -1,11 +1,11 @@
 package main
 
 import (
+	"crypto/md5"
+	"golang.org/x/crypto/bn256"
 	"math/big"
 	"math/rand"
 	"time"
-
-	"golang.org/x/crypto/bn256"
 )
 
 // WBB class
@@ -33,7 +33,8 @@ func (wbb *WBB) Keygen() (*big.Int, *bn256.G2) {
 func (wbb *WBB) Sign(sk *big.Int, m string) *bn256.G1 {
 
 	// string message to big number
-	msg := big.NewInt(0).SetBytes([]byte(m))
+	hash := md5.New()
+	msg := big.NewInt(0).SetBytes(hash.Sum([]byte(m)))
 
 	if big.NewInt(0).Add(sk, msg) == big.NewInt(0) {
 		panic("This sk can`t be used to encrypt current message, please rerun kegen function")
@@ -47,7 +48,8 @@ func (wbb *WBB) Sign(sk *big.Int, m string) *bn256.G1 {
 // Verify (vkx, vky, m, sigma, r)
 func (wbb *WBB) Verify(vk *bn256.G2, m string, sigma *bn256.G1) bool {
 	// string message to big number
-	msg := big.NewInt(0).SetBytes([]byte(m))
+	hash := md5.New()
+	msg := big.NewInt(0).SetBytes(hash.Sum([]byte(m)))
 
 	t := new(bn256.G2)
 	t.ScalarBaseMult(msg)

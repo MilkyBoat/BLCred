@@ -1,11 +1,11 @@
 package main
 
 import (
+	"crypto/md5"
+	"golang.org/x/crypto/bn256"
 	"math/big"
 	"math/rand"
 	"time"
-
-	"golang.org/x/crypto/bn256"
 )
 
 // FBB class
@@ -36,7 +36,8 @@ func (fbb *FBB) Keygen() (*big.Int, *big.Int, *bn256.G2, *bn256.G2) {
 func (fbb *FBB) Sign(skx *big.Int, sky *big.Int, m string) (*bn256.G1, *big.Int) {
 
 	// string message to big number
-	msg := big.NewInt(0).SetBytes([]byte(m))
+	hash := md5.New()
+	msg := big.NewInt(0).SetBytes(hash.Sum([]byte(m)))
 
 	_r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	t1 := big.NewInt(0)
@@ -55,7 +56,8 @@ func (fbb *FBB) Sign(skx *big.Int, sky *big.Int, m string) (*bn256.G1, *big.Int)
 // Verify (vkx, vky, m, sigma, r)
 func (fbb *FBB) Verify(vkx *bn256.G2, vky *bn256.G2, m string, sigma *bn256.G1, r *big.Int) bool {
 	// string message to big number
-	msg := big.NewInt(0).SetBytes([]byte(m))
+	hash := md5.New()
+	msg := big.NewInt(0).SetBytes(hash.Sum([]byte(m)))
 
 	t := new(bn256.G2)
 	t.ScalarMult(vky, r)
