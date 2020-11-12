@@ -23,7 +23,9 @@ pip3 install bplib
 ```
 
 
-All the algorithm has been implemented as Lib*.py in folder /BLCred_offline/lib/. BLCred.py will call them and complete a typical usage process.
+All the algorithm has been implemented as Lib*.py in folder /BLCred_offline/lib/
+
+BLCred.py will call them and complete a typical usage process.
 
 to run the project
 
