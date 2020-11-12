@@ -75,6 +75,7 @@ func main() {
 		blsTest()
 		fbbTest()
 		wbbTest()
+		rsTest()
 		return
 	}
 
