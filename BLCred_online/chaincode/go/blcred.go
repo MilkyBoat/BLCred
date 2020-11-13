@@ -76,6 +76,7 @@ func main() {
 		fbbTest()
 		wbbTest()
 		rsTest()
+		nizkTest()
 		return
 	}
 
