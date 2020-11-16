@@ -7,7 +7,6 @@ echo "\___ \    | |     / _ \   | |_) |   | |  "
 echo " ___) |   | |    / ___ \  |  _ <    | |  "
 echo "|____/    |_|   /_/   \_\ |_| \_\   |_|  "
 echo
-echo "Upgrade your first network (BYFN) from v1.3.x to v1.4.x end-to-end test"
 echo
 CHANNEL_NAME="$1"
 DELAY="$2"

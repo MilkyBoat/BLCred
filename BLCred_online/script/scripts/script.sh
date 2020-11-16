@@ -7,7 +7,6 @@ echo "\___ \    | |     / _ \   | |_) |   | |  "
 echo " ___) |   | |    / ___ \  |  _ <    | |  "
 echo "|____/    |_|   /_/   \_\ |_| \_\   |_|  "
 echo
-echo "Build your first network (BYFN) end-to-end test"
 echo
 CHANNEL_NAME="$1"
 DELAY="$2"
@@ -26,13 +25,6 @@ COUNTER=1
 MAX_RETRY=10
 
 CC_SRC_PATH="github.com/chaincode/chaincode_example02/go/"
-if [ "$LANGUAGE" = "node" ]; then
-	CC_SRC_PATH="/opt/gopath/src/github.com/chaincode/chaincode_example02/node/"
-fi
-
-if [ "$LANGUAGE" = "java" ]; then
-	CC_SRC_PATH="/opt/gopath/src/github.com/chaincode/chaincode_example02/java/"
-fi
 
 echo "Channel name : "$CHANNEL_NAME
 
@@ -115,7 +107,7 @@ if [ "${NO_CHAINCODE}" != "true" ]; then
 fi
 
 echo
-echo "========= All GOOD, BYFN execution completed =========== "
+echo "========= All GOOD, execution completed =========== "
 echo
 
 echo
