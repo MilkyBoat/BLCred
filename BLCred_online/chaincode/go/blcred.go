@@ -71,7 +71,7 @@ func (s *SmartContract) credverify(APIstub shim.ChaincodeStubInterface, args []s
 
 func main() {
 
-	test := true
+	test := false
 
 	if test {
 		blsTest()
