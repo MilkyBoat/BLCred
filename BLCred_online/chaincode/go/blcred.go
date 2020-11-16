@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math/big"
 
 	// "github.com/hyperledger/fabric/core/chaincode/shim"
 	// sc "github.com/hyperledger/fabric/protos/peer"
@@ -11,6 +12,7 @@ import (
 
 // SmartContract :
 type SmartContract struct {
+	P *big.Int
 }
 
 // Init :
@@ -48,6 +50,7 @@ func (s *SmartContract) authkeygen(APIstub shim.ChaincodeStubInterface, args []s
 
 // ukeygen()
 func (s *SmartContract) ukeygen(APIstub shim.ChaincodeStubInterface) sc.Response {
+
 	return shim.Success(nil)
 }
 
@@ -68,7 +71,6 @@ func (s *SmartContract) credverify(APIstub shim.ChaincodeStubInterface, args []s
 
 func main() {
 
-	// debug := false
 	test := true
 
 	if test {

@@ -21,5 +21,9 @@ bin/
 # Dependency directories (remove the comment below to include it)
 vendor/
 
+# src
+*.pdf
+*.zip
+
 # temp file
 t__*
