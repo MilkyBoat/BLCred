@@ -22,6 +22,7 @@ type RSSK struct {
 // RSVK vk X, Y, _Y, Z *bn256.G1 and *bn256.G2
 type RSVK struct {
 	X  *bn256.G1
+	_X *bn256.G2
 	Y  []*bn256.G1
 	_Y []*bn256.G2
 	Z  map[int]*bn256.G1
@@ -47,6 +48,7 @@ func (rs *RS) Keygen(n int) (RSSK, RSVK) {
 	r.Seed(time.Now().UnixNano())
 	x := big.NewInt(0).Rand(r, rs.P)
 	X := new(bn256.G1).ScalarBaseMult(x)
+	_X := new(bn256.G2).ScalarBaseMult(x)
 	y := make([]*big.Int, n)
 	Y := make([]*bn256.G1, n)
 	_Y := make([]*bn256.G2, n)
@@ -64,7 +66,7 @@ func (rs *RS) Keygen(n int) (RSSK, RSVK) {
 		}
 	}
 
-	return RSSK{x, y}, RSVK{X, Y, _Y, Z}
+	return RSSK{x, y}, RSVK{X, _X, Y, _Y, Z}
 }
 
 // Sign (sk, m)
