@@ -1,7 +1,10 @@
 package main
 
 import (
+	// "bytes"
 	"crypto/md5"
+	// "encoding/binary"
+	// "encoding/json"
 	"golang.org/x/crypto/bn256"
 	"math/big"
 	"math/rand"
@@ -19,7 +22,39 @@ type RSSK struct {
 	y []*big.Int
 }
 
-// RSVK vk X, Y, _Y, Z *bn256.G1 and *bn256.G2
+// // Bytes : encode RSSK to []byte
+// func (rssk *RSSK) Bytes() []byte {
+// 	buf := bytes.NewBuffer([]byte{})
+// 	bx := rssk.x.Bytes()
+// 	// binary.Write(buf, binary.BigEndian, len(bx))
+// 	binary.Write(buf, binary.BigEndian, bx)
+// 	// binary.Write(buf, binary.BigEndian, len(rssk.y))
+// 	for _, v := range rssk.y {
+// 		by := v.Bytes()
+// 		// binary.Write(buf, binary.BigEndian, len(by))
+// 		binary.Write(buf, binary.BigEndian, by)
+// 	}
+// 	return buf.Bytes()
+// }
+
+// // FromBytes : decode RSSK from []byte
+// //	buf:	[]byte to decode
+// //	bits:	int, the bit length of big number used in RSSK, same with big prime P,
+// //			get it with: len(p.Bytes()), in BLCred project, p was set 16bits as default
+// //	leny:	int, amount of elements in y
+// func (rssk *RSSK) FromBytes(buf []byte, bits int, leny int) bool {
+// 	if len(buf) < bits*(leny+1) {
+// 		return false
+// 	}
+// 	rssk.x.SetBytes(buf[:bits])
+// 	for i := 1; i <= leny; i++ {
+// 		n := big.NewInt(0).SetBytes(buf[bits*i : bits*(i+1)])
+// 		rssk.y = append(rssk.y, n)
+// 	}
+// 	return true
+// }
+
+// RSVK vk X, _X, Y, _Y, Z *bn256.G1 and *bn256.G2
 type RSVK struct {
 	X  *bn256.G1
 	_X *bn256.G2
@@ -27,6 +62,38 @@ type RSVK struct {
 	_Y []*bn256.G2
 	Z  map[int]*bn256.G1
 }
+
+// // Bytes : encode RSVK to []byte
+// func (rsvk *RSVK) Bytes() []byte {
+// 	buf := bytes.NewBuffer([]byte{})
+// 	binary.Write(buf, binary.BigEndian, rsvk.X.Marshal())
+// 	binary.Write(buf, binary.BigEndian, rsvk._X.Marshal())
+// 	for _, v := range rsvk.Y {
+// 		binary.Write(buf, binary.BigEndian, v.Marshal())
+// 	}
+// 	for _, v := range rsvk._Y {
+// 		binary.Write(buf, binary.BigEndian, v.Marshal())
+// 	}
+// 	binary.Write(buf, binary.BigEndian)
+// 	return buf.Bytes()
+// }
+
+// // FromBytes : decode RSVK from []byte
+// //	buf:	[]byte to decode
+// //	bits:	int, the bit length of big number used in RSVK, same with big prime P,
+// //			get it with: len(p.Bytes()), in BLCred project, p was set 16bits as default
+// //	leny:	int, amount of elements in y
+// func (rsvk *RSVK) FromBytes(buf []byte, bits int, leny int) bool {
+// 	if len(buf) < bits*(leny+1) {
+// 		return false
+// 	}
+// 	rsvk.X.SetBytes(buf[:bits])
+// 	for i := 1; i <= leny; i++ {
+// 		n := big.NewInt(0).SetBytes(buf[bits*i : bits*(i+1)])
+// 		rsvk.Y = append(rsvk.Y, n)
+// 	}
+// 	return true
+// }
 
 // SIGMA s1, s2, s11, s21
 type SIGMA struct {
@@ -176,6 +243,34 @@ func min(a int, b int) int {
 		return b
 	}
 	return a
+}
+
+// D2string : encode a bool set to string set
+func D2string(D []bool) string {
+	s := ""
+	for _, v := range D {
+		if v == true {
+			s += "1"
+		} else {
+			s += "0"
+		}
+	}
+	return s
+}
+
+// String2D : decode a string set to bool set
+func String2D(s string) []bool {
+	D := []bool{}
+	for i := 0; i < len(s); i++ {
+		if s[i] == '1' {
+			D = append(D, true)
+		} else if s[i] == '0' {
+			D = append(D, false)
+		} else {
+			panic("illegal string")
+		}
+	}
+	return D
 }
 
 func rsTest() {

@@ -19,7 +19,7 @@ type NIZK struct {
 
 // NIZKPI pi param for NIZK
 type NIZKPI struct {
-	C *bn256.G1
+	C *bn256.G2
 	c *big.Int
 	r []*big.Int
 }
@@ -29,22 +29,22 @@ func (nizk *NIZK) Init(_p *big.Int) {
 	nizk.P = _p
 }
 
-func (nizk *NIZK) commitS(m []string, s *big.Int, P *bn256.G1, Q []*bn256.G1) *bn256.G1 {
-	C := new(bn256.G1).ScalarMult(P, s)
+func (nizk *NIZK) commitS(m []string, s *big.Int, P *bn256.G2, Q []*bn256.G2) *bn256.G2 {
+	C := new(bn256.G2).ScalarMult(P, s)
 	hash := md5.New()
 	for i := range Q {
 		msg := big.NewInt(0).SetBytes(hash.Sum([]byte(m[i])))
-		C.Add(C, new(bn256.G1).ScalarMult(Q[i], msg))
+		C.Add(C, new(bn256.G2).ScalarMult(Q[i], msg))
 	}
 	return C
 }
 
-func (nizk *NIZK) revealS(C *bn256.G1, m []string, s *big.Int, P *bn256.G1, Q []*bn256.G1) bool {
+func (nizk *NIZK) revealS(C *bn256.G2, m []string, s *big.Int, P *bn256.G2, Q []*bn256.G2) bool {
 	return nizk.commitS(m, s, P, Q).String() == C.String()
 }
 
 // ProveK (m, s, P, Q)
-func (nizk *NIZK) ProveK(m []string, s *big.Int, P *bn256.G1, Q []*bn256.G1) NIZKPI {
+func (nizk *NIZK) ProveK(m []string, s *big.Int, P *bn256.G2, Q []*bn256.G2) NIZKPI {
 
 	if len(m) != len(Q) {
 		panic("message amount cann`t match Q")
@@ -60,9 +60,9 @@ func (nizk *NIZK) ProveK(m []string, s *big.Int, P *bn256.G1, Q []*bn256.G1) NIZ
 		w[i] = big.NewInt(0).Rand(_r, bn256.Order)
 	}
 
-	W := new(bn256.G1).ScalarMult(P, w[n])
+	W := new(bn256.G2).ScalarMult(P, w[n])
 	for i := 0; i < n; i++ {
-		W.Add(W, new(bn256.G1).ScalarMult(Q[i], w[i]))
+		W.Add(W, new(bn256.G2).ScalarMult(Q[i], w[i]))
 	}
 
 	buf := bytes.NewBuffer(P.Marshal())
@@ -92,15 +92,15 @@ func (nizk *NIZK) ProveK(m []string, s *big.Int, P *bn256.G1, Q []*bn256.G1) NIZ
 }
 
 // VerifyK (pi, P, Q)
-func (nizk *NIZK) VerifyK(pi NIZKPI, P *bn256.G1, Q []*bn256.G1) bool {
+func (nizk *NIZK) VerifyK(pi NIZKPI, P *bn256.G2, Q []*bn256.G2) bool {
 
 	n := len(Q)
 	hash := md5.New()
 
-	W := new(bn256.G1).ScalarMult(pi.C, pi.c)
-	W.Add(W, new(bn256.G1).ScalarMult(P, pi.r[n]))
+	W := new(bn256.G2).ScalarMult(pi.C, pi.c)
+	W.Add(W, new(bn256.G2).ScalarMult(P, pi.r[n]))
 	for i := 0; i < n; i++ {
-		W.Add(W, new(bn256.G1).ScalarMult(Q[i], pi.r[i]))
+		W.Add(W, new(bn256.G2).ScalarMult(Q[i], pi.r[i]))
 	}
 
 	buf := bytes.NewBuffer(P.Marshal())
@@ -116,7 +116,7 @@ func (nizk *NIZK) VerifyK(pi NIZKPI, P *bn256.G1, Q []*bn256.G1) bool {
 }
 
 // ProveDL (m, Q)
-func (nizk *NIZK) ProveDL(m []string, Q []*bn256.G1) NIZKPI {
+func (nizk *NIZK) ProveDL(m []string, Q []*bn256.G2) NIZKPI {
 
 	if len(m) != len(Q) {
 		panic("message amount cann`t match Q")
@@ -126,10 +126,10 @@ func (nizk *NIZK) ProveDL(m []string, Q []*bn256.G1) NIZKPI {
 	hash := md5.New()
 	_r := rand.New(rand.NewSource(time.Now().UnixNano()))
 
-	C := new(bn256.G1).ScalarBaseMult(big.NewInt(0))
+	C := new(bn256.G2).ScalarBaseMult(big.NewInt(0))
 	for i := 0; i < n; i++ {
 		msg := big.NewInt(0).SetBytes(hash.Sum([]byte(m[i])))
-		C.Add(C, new(bn256.G1).ScalarMult(Q[i], msg))
+		C.Add(C, new(bn256.G2).ScalarMult(Q[i], msg))
 	}
 
 	w := make([]*big.Int, n)
@@ -137,9 +137,9 @@ func (nizk *NIZK) ProveDL(m []string, Q []*bn256.G1) NIZKPI {
 		w[i] = big.NewInt(0).Rand(_r, bn256.Order)
 	}
 
-	W := new(bn256.G1).ScalarBaseMult(big.NewInt(0))
+	W := new(bn256.G2).ScalarBaseMult(big.NewInt(0))
 	for i := 0; i < n; i++ {
-		W.Add(W, new(bn256.G1).ScalarMult(Q[i], w[i]))
+		W.Add(W, new(bn256.G2).ScalarMult(Q[i], w[i]))
 	}
 
 	// to simplify the code, string here was Hash( C, Q[i], W ) which is diffrent from the paper
@@ -164,14 +164,14 @@ func (nizk *NIZK) ProveDL(m []string, Q []*bn256.G1) NIZKPI {
 }
 
 // VerifyDL (pi, Q)
-func (nizk *NIZK) VerifyDL(pi NIZKPI, Q []*bn256.G1) bool {
+func (nizk *NIZK) VerifyDL(pi NIZKPI, Q []*bn256.G2) bool {
 
 	n := len(Q)
 	hash := md5.New()
 
-	t := new(bn256.G1).ScalarMult(pi.C, pi.c)
+	t := new(bn256.G2).ScalarMult(pi.C, pi.c)
 	for i := 0; i < n; i++ {
-		t.Add(t, new(bn256.G1).ScalarMult(Q[i], pi.r[i]))
+		t.Add(t, new(bn256.G2).ScalarMult(Q[i], pi.r[i]))
 	}
 
 	buf := bytes.NewBuffer(pi.C.Marshal())
@@ -190,10 +190,10 @@ func nizkTest() {
 	_r := rand.New(rand.NewSource(time.Now().UnixNano()))
 	m := []string{"nezuko", "kawaii", "hhh", "lol2333"}
 	s := big.NewInt(0).Rand(_r, p)
-	P := new(bn256.G1).ScalarBaseMult(big.NewInt(0).Rand(_r, p))
-	Q := make([]*bn256.G1, len(m))
+	P := new(bn256.G2).ScalarBaseMult(big.NewInt(0).Rand(_r, p))
+	Q := make([]*bn256.G2, len(m))
 	for i := range m {
-		Q[i] = new(bn256.G1).ScalarBaseMult(big.NewInt(0).Rand(_r, p))
+		Q[i] = new(bn256.G2).ScalarBaseMult(big.NewInt(0).Rand(_r, p))
 	}
 	nizk := new(NIZK)
 	nizk.Init(p)
