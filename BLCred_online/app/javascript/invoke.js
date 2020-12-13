@@ -32,18 +32,18 @@ async function main() {
         // Get the network (channel) our contract is deployed to.
         const network = await gateway.getNetwork('mychannel');
 
-        // // Get the contract from the network.
-        // const contract = network.getContract('blcred');
+        // Get the contract from the network.
+        const contract = network.getContract('blcred');
 
         // Submit transaction.
-        // await contract.submitTransaction('setup');
-        // console.log('setup transaction has been submitted');
+        await contract.submitTransaction('setup');
+        console.log('setup transaction has been submitted');
 
-        // const rsk = await contract.submitTransaction('authkeygen', '4');
-        // console.log('authkeygen transaction has been submitted');
-        // console.log(rsk.length);
+        const rsk = await contract.submitTransaction('authkeygen', '4');
+        console.log('authkeygen transaction has been submitted');
+        console.log(rsk.length);
         
-
+        
 
         // Disconnect from the gateway.
         await gateway.disconnect();
