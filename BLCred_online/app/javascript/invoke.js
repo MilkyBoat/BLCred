@@ -7,7 +7,7 @@
 const { FileSystemWallet, Gateway } = require('fabric-network');
 const path = require('path');
 
-const ccpPath = path.resolve(__dirname, '..', '..', 'script', 'connection-org1.json');
+const ccpPath = path.resolve(__dirname, '..', '..', 'scripts', 'connection-org1.json');
 
 async function main() {
     try {
@@ -32,14 +32,18 @@ async function main() {
         // Get the network (channel) our contract is deployed to.
         const network = await gateway.getNetwork('mychannel');
 
-        // Get the contract from the network.
-        const contract = network.getContract('blcred');
+        // // Get the contract from the network.
+        // const contract = network.getContract('blcred');
 
-        // Submit the specified transaction.
-        // createCar transaction - requires 5 argument, ex: ('createCar', 'CAR12', 'Honda', 'Accord', 'Black', 'Tom')
-        // changeCarOwner transaction - requires 2 args , ex: ('changeCarOwner', 'CAR10', 'Dave')
-        await contract.submitTransaction('createCar', 'CAR12', 'Honda', 'Accord', 'Black', 'Tom');
-        console.log('Transaction has been submitted');
+        // Submit transaction.
+        // await contract.submitTransaction('setup');
+        // console.log('setup transaction has been submitted');
+
+        // const rsk = await contract.submitTransaction('authkeygen', '4');
+        // console.log('authkeygen transaction has been submitted');
+        // console.log(rsk.length);
+        
+
 
         // Disconnect from the gateway.
         await gateway.disconnect();

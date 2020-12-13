@@ -23,9 +23,9 @@ COUNTER=1
 MAX_RETRY=5
 SYS_CHANNEL=$SYS_CHANNEL
 
-CC_SRC_PATH="github.com/chaincode/chaincode_example02/go/"
+CC_SRC_PATH="github.com/chaincode/go/"
 if [ "$LANGUAGE" = "node" ]; then
-  CC_SRC_PATH="/opt/gopath/src/github.com/chaincode/chaincode_example02/node/"
+  CC_SRC_PATH="/opt/gopath/src/github.com/chaincode/node/"
 fi
 
 echo "System channel name : "$SYS_CHANNEL

@@ -24,7 +24,7 @@ function removeUnwantedImages() {
   fi
 }
 
-cd ../script
+cd ../scripts
 echo y | ./byfn.sh down
 clearContainers
 removeUnwantedImages

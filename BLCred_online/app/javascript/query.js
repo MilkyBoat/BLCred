@@ -7,7 +7,7 @@
 const { FileSystemWallet, Gateway } = require('fabric-network');
 const path = require('path');
 
-const ccpPath = path.resolve(__dirname, '..', '..', 'script', 'connection-org1.json');
+const ccpPath = path.resolve(__dirname, '..', '..', 'scripts', 'connection-org1.json');
 
 async function main() {
     try {
