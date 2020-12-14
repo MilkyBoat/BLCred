@@ -5,6 +5,7 @@
 'use strict';
 
 const { FileSystemWallet, Gateway } = require('fabric-network');
+const fs = require('fs')
 const path = require('path');
 
 const ccpPath = path.resolve(__dirname, '..', '..', 'scripts', 'connection-org1.json');
@@ -36,14 +37,51 @@ async function main() {
         const contract = network.getContract('blcred');
 
         // Submit transaction.
+        console.time('setup')
         await contract.submitTransaction('setup');
         console.log('setup transaction has been submitted');
+        console.timeEnd('setup')
 
-        const rsk = await contract.submitTransaction('authkeygen', '4');
+        console.time('authkeygen')
+        const ak = await contract.submitTransaction('authkeygen', '4');
         console.log('authkeygen transaction has been submitted');
-        console.log(rsk.length);
-        
-        
+        console.timeEnd('authkeygen')
+        console.log('length of data: ', ak.length);
+        var ask = ak.slice(0, 40).toString()
+        let fask = path.resolve(__dirname, 'data', 'ask')
+        fs.writeFile(fask, ask, err => {})
+        var avk = ak.slice(40, ak.length).toString()
+        let favk = path.resolve(__dirname, 'data', 'avk')
+        fs.writeFile(favk, avk, err => {})
+
+        console.time('ukeygen')
+        const uk = await contract.submitTransaction('ukeygen');
+        console.log('ukeygen transaction has been submitted');
+        console.timeEnd('ukeygen')
+        console.log('length of data: ', uk.length);
+        var usk = uk.slice(0, 8).toString()
+        let fusk = path.resolve(__dirname, 'data', 'usk')
+        fs.writeFile(fusk, usk, err => {})
+        var uvk = uk.slice(8, uk.length).toString()
+        let fuvk = path.resolve(__dirname, 'data', 'uvk')
+        fs.writeFile(fuvk, uvk, err => {})
+
+        console.time('issuecred')
+        var m = ['1234', 'abcd', 'nezuko', 'kawaii']
+        const sigmaCred = await contract.submitTransaction('issuecred', uvk, avk, m[0], m[1], m[2], m[3]);
+        console.log('issuecred transaction has been submitted');
+        console.timeEnd('issuecred')
+        console.log('length of data: ', sigmaCred.length);
+        let fsigmaCred = path.resolve(__dirname, 'data', 'sigmaCred')
+        fs.writeFile(fsigmaCred, sigmaCred, err => {})
+
+        console.time('deriveshow')
+
+        console.timeEnd('deriveshow')
+
+        console.time('credverify')
+
+        console.timeEnd('credverify')
 
         // Disconnect from the gateway.
         await gateway.disconnect();

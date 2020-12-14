@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"encoding/binary"
-	"encoding/json"
 	"fmt"
 	"golang.org/x/crypto/bn256"
 	"math/big"
@@ -29,6 +28,28 @@ type SigmaShow struct {
 	X     bn256.G2
 	Y     bn256.G2
 	m     string
+}
+
+func (s *SigmaShow) bytes() []byte {
+	buf := bytes.NewBuffer([]byte{})
+	binary.Write(buf, binary.BigEndian, s.sigma.Marshal()) // 64 bytes
+	binary.Write(buf, binary.BigEndian, s.r.Bytes())       // 8 bytes
+	binary.Write(buf, binary.BigEndian, s.X.Marshal())     // 128 bytes
+	binary.Write(buf, binary.BigEndian, s.Y.Marshal())     // 128 bytes
+	binary.Write(buf, binary.BigEndian, s.m)
+	return buf.Bytes()
+}
+
+func (s *SigmaShow) fromBytes(buf []byte) bool {
+	if len(buf) != 384 {
+		return false
+	}
+	s.sigma.Unmarshal(buf[:64])
+	s.r.SetBytes(buf[64:72])
+	s.X.Unmarshal(buf[72:200])
+	s.Y.Unmarshal(buf[200:328])
+	s.m = string(buf[328:])
+	return true
 }
 
 // Init :
@@ -82,12 +103,8 @@ func (s *SmartContract) authkeygen(APIstub shim.ChaincodeStubInterface, args []s
 	rssk, rsvk := rs.Keygen(n)
 
 	buf := bytes.NewBuffer([]byte{})
-	jsonRssk, _ := json.Marshal(&rssk)
-	// binary.Write(buf, binary.BigEndian, len(bsk))
-	binary.Write(buf, binary.BigEndian, jsonRssk)
-	jsonRsvk, _ := json.Marshal(&rsvk)
-	// binary.Write(buf, binary.BigEndian, len(bvk))
-	binary.Write(buf, binary.BigEndian, jsonRsvk)
+	binary.Write(buf, binary.BigEndian, rssk.Bytes())
+	binary.Write(buf, binary.BigEndian, rsvk.Bytes())
 
 	return shim.Success(buf.Bytes())
 }
@@ -106,19 +123,17 @@ func (s *SmartContract) ukeygen(APIstub shim.ChaincodeStubInterface) sc.Response
 	bsk := sk.Bytes()
 	bvk := vk.Marshal()
 	buf := bytes.NewBuffer([]byte{})
-	// binary.Write(buf, binary.BigEndian, len(bsk))
 	binary.Write(buf, binary.BigEndian, bsk)
-	// binary.Write(buf, binary.BigEndian, len(bvk))
 	binary.Write(buf, binary.BigEndian, bvk)
 
 	return shim.Success(buf.Bytes())
 }
 
-// issuecred(usk,uvk,avk,m1,m2 ...)
+// issuecred(uvk,avk,m1,m2 ...)
 /*
  * Technically, in this function, the code executed by the user and the
  * code executed by the Authenticator should be divided into two functions,
- * which will be called by user and Authenticator respectively. Because
+ * which will be called by user and authenticator respectively. Because
  * this function needs to receive respective private key as parameter.
  * In this project, we want to simplified the code and we merged them into
  * one function. This will not affect the results or performance.
@@ -132,9 +147,11 @@ func (s *SmartContract) issuecred(APIstub shim.ChaincodeStubInterface, args []st
 	PBytes, _ := APIstub.GetState("BLCred_P")
 	BLCredP := big.NewInt(0).SetBytes(PBytes)
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-	uvk, _ := new(bn256.G2).Unmarshal([]byte(args[1]))
-	var avk RSVK
-	json.Unmarshal([]byte(args[2]), &avk)
+	uvk, _ := new(bn256.G2).Unmarshal([]byte(args[0]))
+	avk := new(RSVK)
+	if !avk.FromBytes([]byte(args[1]), 64, 128, 4) {
+		return shim.Error("Decode avk failure.")
+	}
 
 	// user part:
 	nizk := new(NIZK)
@@ -142,43 +159,48 @@ func (s *SmartContract) issuecred(APIstub shim.ChaincodeStubInterface, args []st
 	S := big.NewInt(0).Rand(r, BLCredP)
 	P := uvk
 	Q := []*bn256.G2{}
-	for i := 0; i < len(args)-3; i++ {
+	for i := 0; i < len(args)-2; i++ {
 		qi := big.NewInt(0).Rand(r, BLCredP)
 		Qi := new(bn256.G2).ScalarBaseMult(qi)
 		Q = append(Q, Qi)
 	}
-	pik := nizk.ProveK(args[2:], S, P, Q)
-	pidl := nizk.ProveDL(args[0:1], Q)
+	// pik := nizk.ProveK(args[2:], S, P, Q)
+	pidl := nizk.ProveDL(args[2:], Q)
 
-	// auth part:
-	sigmaCred0 := new(bn256.G2)
-	sigmaCred1 := new(bn256.G2)
-	if nizk.VerifyK(pik, P, Q) && nizk.VerifyDL(pidl, Q) {
-		w := big.NewInt(0).Rand(r, BLCredP)
-		sigmaCred0 = sigmaCred0.ScalarMult(uvk, w)
-		sigmaCred1 = sigmaCred1.Add(avk._X, pik.C)
-		sigmaCred1 = sigmaCred1.ScalarMult(sigmaCred1, w)
-	} else {
-		panic("Auth check failed!")
-	}
-	sigmaCred1 = sigmaCred1.ScalarMult(sigmaCred1, S)
-	// FIXIT: golang bn256.G2 struct has no Neg function
-	// sigmaCred1 = sigmaCred1.Neg(sigmaCred1)
-	sigmaCred1 = sigmaCred1.Add(sigmaCred0, sigmaCred1)
+	fmt.Print(S, P, Q)
+	fmt.Print(pidl)
 
-	sigmaCred := SIGMA{
-		new(bn256.G1).ScalarBaseMult(big.NewInt(1)),
-		new(bn256.G1).ScalarBaseMult(big.NewInt(1)),
-		sigmaCred0,
-		sigmaCred1,
-	}
+	bytesBuffer := bytes.NewBuffer([]byte{})
+	binary.Write(bytesBuffer, binary.BigEndian, byte(len(args[0])))
+	return shim.Success(bytesBuffer.Bytes())
 
-	jsonSigma, _ := json.Marshal(&sigmaCred)
+	// // auth part:
+	// sigmaCred0 := new(bn256.G2)
+	// sigmaCred1 := new(bn256.G2)
+	// if nizk.VerifyK(pik, P, Q) && nizk.VerifyDL(pidl, Q) {
+	// 	w := big.NewInt(0).Rand(r, BLCredP)
+	// 	sigmaCred0 = sigmaCred0.ScalarMult(uvk, w)
+	// 	sigmaCred1 = sigmaCred1.Add(avk.VK_X, pik.NIZKC)
+	// 	sigmaCred1 = sigmaCred1.ScalarMult(sigmaCred1, w)
+	// } else {
+	// 	panic("Auth check failed!")
+	// }
+	// sigmaCred1 = sigmaCred1.ScalarMult(sigmaCred1, S)
+	// // FIXIT: golang bn256.G2 struct has no Neg function
+	// // sigmaCred1 = sigmaCred1.Neg(sigmaCred1)
+	// sigmaCred1 = sigmaCred1.Add(sigmaCred0, sigmaCred1)
 
-	return shim.Success(jsonSigma)
+	// sigmaCred := SIGMA{
+	// 	new(bn256.G1).ScalarBaseMult(big.NewInt(1)),
+	// 	new(bn256.G1).ScalarBaseMult(big.NewInt(1)),
+	// 	sigmaCred0,
+	// 	sigmaCred1,
+	// }
+
+	// return shim.Success(sigmaCred.Bytes())
 }
 
-// deriveshow(phi,usk,avk,sigma_cred,D,m...)
+// deriveshow(phi,avk,sigma_cred,D,m...)
 func (s *SmartContract) deriveshow(APIstub shim.ChaincodeStubInterface, args []string) sc.Response {
 
 	if len(args) < 6 {
@@ -189,7 +211,7 @@ func (s *SmartContract) deriveshow(APIstub shim.ChaincodeStubInterface, args []s
 	BLCredP := big.NewInt(0).SetBytes(PBytes)
 	// usk := big.NewInt(0).SetBytes([]byte(args[1]))
 	var avk RSVK
-	json.Unmarshal([]byte(args[2]), &avk)
+	avk.FromBytes([]byte(args[1]), 64, 128, 4)
 	// var sigmaCred SIGMA
 	// json.Unmarshal([]byte(args[3]), &sigmaCred)
 
@@ -211,15 +233,13 @@ func (s *SmartContract) deriveshow(APIstub shim.ChaincodeStubInterface, args []s
 	sig, r := fbb.Sign(fbbx, fbby, m)
 	sigmaShow := SigmaShow{*sig, *r, *fbbX, *fbbY, piNIZK}
 
-	jsonSigmaShow, _ := json.Marshal(&sigmaShow)
-
-	return shim.Success(jsonSigmaShow)
+	return shim.Success(sigmaShow.bytes())
 }
 
 // credverify(avk,sigma_show,phi)
 func (s *SmartContract) credverify(APIstub shim.ChaincodeStubInterface, args []string) sc.Response {
 
-	if len(args) < 3 {
+	if len(args) != 3 {
 		return shim.Error("Incorrect number of arguments. Expecting 3")
 	}
 
@@ -227,9 +247,9 @@ func (s *SmartContract) credverify(APIstub shim.ChaincodeStubInterface, args []s
 	BLCredP := big.NewInt(0).SetBytes(PBytes)
 
 	var avk RSVK
-	json.Unmarshal([]byte(args[0]), &avk)
+	avk.FromBytes([]byte(args[0]), 64, 128, 4)
 	var sigmaShow SigmaShow
-	json.Unmarshal([]byte(args[1]), &sigmaShow)
+	sigmaShow.fromBytes([]byte(args[1]))
 	piNIZK := "BLCredTest"
 	otsvk := string(append(sigmaShow.X.Marshal(), sigmaShow.Y.Marshal()...))
 	m := piNIZK + string(args[2]) + otsvk

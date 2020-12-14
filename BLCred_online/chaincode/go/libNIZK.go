@@ -19,9 +19,9 @@ type NIZK struct {
 
 // NIZKPI pi param for NIZK
 type NIZKPI struct {
-	C *bn256.G2
-	c *big.Int
-	r []*big.Int
+	NIZKC *bn256.G2
+	NIZKc *big.Int
+	NIZKr []*big.Int
 }
 
 // Init (p)
@@ -47,7 +47,8 @@ func (nizk *NIZK) revealS(C *bn256.G2, m []string, s *big.Int, P *bn256.G2, Q []
 func (nizk *NIZK) ProveK(m []string, s *big.Int, P *bn256.G2, Q []*bn256.G2) NIZKPI {
 
 	if len(m) != len(Q) {
-		panic("message amount cann`t match Q")
+		return NIZKPI{nil, nil, nil}
+		// panic("message amount cann`t match Q")
 	}
 
 	C := nizk.commitS(m, s, P, Q)
@@ -97,22 +98,22 @@ func (nizk *NIZK) VerifyK(pi NIZKPI, P *bn256.G2, Q []*bn256.G2) bool {
 	n := len(Q)
 	hash := md5.New()
 
-	W := new(bn256.G2).ScalarMult(pi.C, pi.c)
-	W.Add(W, new(bn256.G2).ScalarMult(P, pi.r[n]))
+	W := new(bn256.G2).ScalarMult(pi.NIZKC, pi.NIZKc)
+	W.Add(W, new(bn256.G2).ScalarMult(P, pi.NIZKr[n]))
 	for i := 0; i < n; i++ {
-		W.Add(W, new(bn256.G2).ScalarMult(Q[i], pi.r[i]))
+		W.Add(W, new(bn256.G2).ScalarMult(Q[i], pi.NIZKr[i]))
 	}
 
 	buf := bytes.NewBuffer(P.Marshal())
 	for _, v := range Q {
 		buf.Write(v.Marshal())
 	}
-	buf.Write(pi.C.Marshal())
+	buf.Write(pi.NIZKC.Marshal())
 	buf.Write(W.Marshal())
 	c := big.NewInt(0).SetBytes(hash.Sum(buf.Bytes()))
 	c.Mod(c, nizk.P)
 
-	return pi.c.String() == c.String()
+	return pi.NIZKc.String() == c.String()
 }
 
 // ProveDL (m, Q)
@@ -169,12 +170,12 @@ func (nizk *NIZK) VerifyDL(pi NIZKPI, Q []*bn256.G2) bool {
 	n := len(Q)
 	hash := md5.New()
 
-	t := new(bn256.G2).ScalarMult(pi.C, pi.c)
+	t := new(bn256.G2).ScalarMult(pi.NIZKC, pi.NIZKc)
 	for i := 0; i < n; i++ {
-		t.Add(t, new(bn256.G2).ScalarMult(Q[i], pi.r[i]))
+		t.Add(t, new(bn256.G2).ScalarMult(Q[i], pi.NIZKr[i]))
 	}
 
-	buf := bytes.NewBuffer(pi.C.Marshal())
+	buf := bytes.NewBuffer(pi.NIZKC.Marshal())
 	for _, v := range Q {
 		buf.Write(v.Marshal())
 	}
@@ -182,7 +183,7 @@ func (nizk *NIZK) VerifyDL(pi NIZKPI, Q []*bn256.G2) bool {
 	c := big.NewInt(0).SetBytes(hash.Sum(buf.Bytes()))
 	c.Mod(c, nizk.P)
 
-	return pi.c.String() == c.String()
+	return pi.NIZKc.String() == c.String()
 }
 
 func nizkTest() {
