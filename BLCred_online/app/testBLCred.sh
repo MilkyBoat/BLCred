@@ -18,6 +18,13 @@ if [ -d "./wallet" ]; then
     rm -r wallet/
 fi
 
+# clean key file
+if [ -d "./data" ]; then
+    rm -f ./data*k
+    rm -f ./data*d
+    rm -f ./data*w
+fi
+
 echo
 echo "-----------------------"
 echo "enrollAdmin ..."

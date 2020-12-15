@@ -47,8 +47,7 @@ func (nizk *NIZK) revealS(C *bn256.G2, m []string, s *big.Int, P *bn256.G2, Q []
 func (nizk *NIZK) ProveK(m []string, s *big.Int, P *bn256.G2, Q []*bn256.G2) NIZKPI {
 
 	if len(m) != len(Q) {
-		return NIZKPI{nil, nil, nil}
-		// panic("message amount cann`t match Q")
+		panic("message amount cann`t match Q")
 	}
 
 	C := nizk.commitS(m, s, P, Q)

@@ -38,50 +38,54 @@ async function main() {
 
         // Submit transaction.
         console.time('setup')
-        await contract.submitTransaction('setup');
+        const p = await contract.submitTransaction('setup');
         console.log('setup transaction has been submitted');
         console.timeEnd('setup')
+        console.log('length of data: ', p.length);
 
         console.time('authkeygen')
-        const ak = await contract.submitTransaction('authkeygen', '4');
+        const ask = await contract.submitTransaction('authkeygen', '4');
         console.log('authkeygen transaction has been submitted');
         console.timeEnd('authkeygen')
-        console.log('length of data: ', ak.length);
-        var ask = ak.slice(0, 40).toString()
+        console.log('length of data: ', ask.length);
         let fask = path.resolve(__dirname, 'data', 'ask')
         fs.writeFile(fask, ask, err => {})
-        var avk = ak.slice(40, ak.length).toString()
-        let favk = path.resolve(__dirname, 'data', 'avk')
-        fs.writeFile(favk, avk, err => {})
 
         console.time('ukeygen')
-        const uk = await contract.submitTransaction('ukeygen');
+        const usk = await contract.submitTransaction('ukeygen');
         console.log('ukeygen transaction has been submitted');
         console.timeEnd('ukeygen')
-        console.log('length of data: ', uk.length);
-        var usk = uk.slice(0, 8).toString()
+        console.log('length of data: ', usk.length);
         let fusk = path.resolve(__dirname, 'data', 'usk')
         fs.writeFile(fusk, usk, err => {})
-        var uvk = uk.slice(8, uk.length).toString()
-        let fuvk = path.resolve(__dirname, 'data', 'uvk')
-        fs.writeFile(fuvk, uvk, err => {})
 
+        var m = ["nezuko", "kawaii", "hhh", "lol2333"]
         console.time('issuecred')
-        var m = ['1234', 'abcd', 'nezuko', 'kawaii']
-        const sigmaCred = await contract.submitTransaction('issuecred', uvk, avk, m[0], m[1], m[2], m[3]);
+        const sigmaCred = await contract.submitTransaction('issuecred', m[0], m[1], m[2], m[3]);
         console.log('issuecred transaction has been submitted');
         console.timeEnd('issuecred')
         console.log('length of data: ', sigmaCred.length);
         let fsigmaCred = path.resolve(__dirname, 'data', 'sigmaCred')
         fs.writeFile(fsigmaCred, sigmaCred, err => {})
 
+        var phi = 'testtesttest'
+        var D = '1001'
         console.time('deriveshow')
-
+        const sigmaShow = await contract.submitTransaction('deriveshow', phi, D, m[0], m[1], m[2], m[3]);
+        console.log('deriveshow transaction has been submitted');
         console.timeEnd('deriveshow')
+        console.log('length of data: ', sigmaShow.length);
 
         console.time('credverify')
-
+        const result = await contract.submitTransaction('credverify', phi);
+        console.log('credverify transaction has been submitted');
         console.timeEnd('credverify')
+        if (result.toString() == '1') {
+            console.log('credverify successful');
+        }
+        else {
+            console.log('credverify failure');
+        }
 
         // Disconnect from the gateway.
         await gateway.disconnect();
