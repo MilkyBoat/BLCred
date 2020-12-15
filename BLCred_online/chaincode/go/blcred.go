@@ -125,12 +125,10 @@ func (s *SmartContract) ukeygen(APIstub shim.ChaincodeStubInterface) sc.Response
 	sk, vk := bls.Keygen()
 
 	// encode sk and vk to []byte
-	bsk := sk.Bytes()
 	APIstub.PutState("uvk", vk.Marshal())
-	buf := bytes.NewBuffer([]byte{})
-	binary.Write(buf, binary.BigEndian, bsk)
+	bsk := sk.String()
 
-	return shim.Success(buf.Bytes())
+	return shim.Success([]byte(bsk))
 }
 
 // issuecred(m1,m2 ...)
@@ -206,17 +204,16 @@ func (s *SmartContract) issuecred(APIstub shim.ChaincodeStubInterface, args []st
 	return shim.Success(sigmaCredb)
 }
 
-// deriveshow(phi,D,m...)
+// deriveshow(phi,usk,D,m...)
 func (s *SmartContract) deriveshow(APIstub shim.ChaincodeStubInterface, args []string) sc.Response {
 
-	if len(args) < 3 {
-		return shim.Error("Incorrect number of arguments. Expecting at least 3")
+	if len(args) < 4 {
+		return shim.Error("Incorrect number of arguments. Expecting at least 4")
 	}
 
 	PBytes, _ := APIstub.GetState("BLCred_P")
 	BLCredP := big.NewInt(0).SetBytes(PBytes)
-	// uvkb, _ := APIstub.GetState("uvk")
-	// uvk, _ := new(bn256.G2).Unmarshal(uvkb)
+	// usk, _ := big.NewInt(0).SetString(args[1], 10)
 	avkb, _ := APIstub.GetState("avk")
 	var avk RSVK
 	if !avk.FromBytes(avkb, 64, 128, 4) {
@@ -239,7 +236,7 @@ func (s *SmartContract) deriveshow(APIstub shim.ChaincodeStubInterface, args []s
 
 	// rs := new(RS)
 	// rs.Init(BLCredP)
-	// sigmad := rs.Derive(avk, sigmaCred, String2D(args[1]), args[2:])
+	// sigmad := rs.Derive(avk, sigmaCred, String2D(args[2]), args[3:])
 
 	piNIZK := "BLCredTest"
 	m := piNIZK + string(args[0]) + ptH
