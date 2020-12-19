@@ -68,7 +68,7 @@ async function main() {
         let fsigmaCred = path.resolve(__dirname, 'data', 'sigmaCred')
         fs.writeFile(fsigmaCred, sigmaCred, err => {})
 
-        var phi = 'testtesttest'
+        var phi = 'BLCredTestPhi'
         var D = '1001'
         console.time('deriveshow')
         const sigmaShow = await contract.submitTransaction('deriveshow', phi, D, m[0], m[1], m[2], m[3]);
