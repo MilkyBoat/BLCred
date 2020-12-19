@@ -2,7 +2,8 @@ package main
 
 import (
 	"crypto/md5"
-	"golang.org/x/crypto/bn256"
+	// "golang.org/x/crypto/bn256"
+	"github.com/drbh/zkproofs/go-ethereum/crypto/bn256"
 	"math/big"
 	"math/rand"
 	"time"
