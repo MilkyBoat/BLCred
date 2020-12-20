@@ -47,6 +47,12 @@ python3 BLCred.py
 
 You can find a basic tutorials on environment configuration here: [Getting Started](https://hyperledger-fabric.readthedocs.io/en/latest/getting_started.html)
 
+we use a [third party bilinearity](https://github.com/drbh/zkproofs/tree/master/go-ethereum/crypto/bn256) lib instead of bn256 of go language, install it with
+
+```bash
+go get github.com/drbh/zkproofs/go-ethereum/crypto/bn256
+```
+
 ### to run the project
 
 ```bash
