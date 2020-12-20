@@ -32,6 +32,7 @@ func (nizk *NIZK) commitS(m []string, s *big.Int, P *bn256.G2, Q []*bn256.G2) *b
 	hash := md5.New()
 	for i := range Q {
 		msg := big.NewInt(0).SetBytes(hash.Sum([]byte(m[i])))
+		msg.Mod(msg, nizk.P)
 		C.Add(C, new(bn256.G2).ScalarMult(Q[i], msg))
 	}
 	return C
@@ -75,6 +76,7 @@ func (nizk *NIZK) ProveK(m []string, s *big.Int, P *bn256.G2, Q []*bn256.G2) NIZ
 	r := make([]*big.Int, n+1)
 	for i := 0; i < n; i++ {
 		msg := big.NewInt(0).SetBytes(hash.Sum([]byte(m[i])))
+		msg.Mod(msg, nizk.P)
 
 		// if i == 0 {
 		// 	println(len(big.NewInt(0).Mul(msg, c).Bytes()))
@@ -130,6 +132,7 @@ func (nizk *NIZK) ProveDL(m []string, Q []*bn256.G2) NIZKPI {
 	C := new(bn256.G2).ScalarBaseMult(big.NewInt(0))
 	for i := 0; i < n; i++ {
 		msg := big.NewInt(0).SetBytes(hash.Sum([]byte(m[i])))
+		msg.Mod(msg, nizk.P)
 		C.Add(C, new(bn256.G2).ScalarMult(Q[i], msg))
 	}
 
@@ -155,6 +158,7 @@ func (nizk *NIZK) ProveDL(m []string, Q []*bn256.G2) NIZKPI {
 	r := make([]*big.Int, n)
 	for i := 0; i < n; i++ {
 		msg := big.NewInt(0).SetBytes(hash.Sum([]byte(m[i])))
+		msg.Mod(msg, nizk.P)
 		// if i == 0 {
 		// 	println(len(big.NewInt(0).Mul(msg, c).Bytes()))
 		// }
