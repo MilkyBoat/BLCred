@@ -71,7 +71,7 @@ async function main() {
         var phi = 'BLCredTestPhi'
         var D = '1001'
         console.time('deriveshow')
-        const sigmaShow = await contract.submitTransaction('deriveshow', phi, D, m[0], m[1], m[2], m[3]);
+        const sigmaShow = await contract.submitTransaction('deriveshow', phi, usk.toString(), D, m[0], m[1], m[2], m[3]);
         console.log('deriveshow transaction has been submitted');
         console.timeEnd('deriveshow')
         console.log('length of data: ', sigmaShow.length);

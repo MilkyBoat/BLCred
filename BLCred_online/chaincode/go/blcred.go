@@ -40,13 +40,13 @@ func (s *SigmaShow) bytes() []byte {
 	binary.Write(buf, binary.BigEndian, s.pi.NIZKC.Marshal()) // 128 bytes
 	binary.Write(buf, binary.BigEndian, s.pi.NIZKc.Bytes())   // 8 bytes
 	for _, v := range s.pi.NIZKr {
-		binary.Write(buf, binary.BigEndian, []byte(v.Bytes())) // 8*n bytes
+		binary.Write(buf, binary.BigEndian, []byte(v.Bytes())) // 32*n bytes
 	}
 	return buf.Bytes()
 }
 
 func (s *SigmaShow) fromBytes(buf []byte) bool {
-	if len(buf) <= 472 || (len(buf)-464)%8 != 0 {
+	if len(buf) < 528 || (len(buf)-464)%32 != 0 {
 		return false
 	}
 	psigma, _ := new(bn256.G1).Unmarshal(buf[:64])
@@ -59,10 +59,10 @@ func (s *SigmaShow) fromBytes(buf []byte) bool {
 	s.pi = *new(NIZKPI)
 	s.pi.NIZKC, _ = new(bn256.G2).Unmarshal(buf[328:456])
 	s.pi.NIZKc = big.NewInt(0).SetBytes(buf[456:464])
-	n := (len(buf) - 464) / 8
+	n := (len(buf) - 464) / 32
 	s.pi.NIZKr = make([]*big.Int, n)
 	for i := 0; i < n; i++ {
-		s.pi.NIZKr[i] = big.NewInt(0).SetBytes(buf[464+i*8 : 464+(i+1)*8])
+		s.pi.NIZKr[i] = big.NewInt(0).SetBytes(buf[464+i*32 : 464+(i+1)*32])
 	}
 	return true
 }
@@ -182,10 +182,6 @@ func (s *SmartContract) issuecred(APIstub shim.ChaincodeStubInterface, args []st
 	pik := nizk.ProveK(args, S, P, Q)
 	pidl := nizk.ProveDL(args, Q)
 
-	fmt.Print(S, P, Q)
-	fmt.Print(pidl)
-	fmt.Print(pik)
-
 	// auth part:
 	sigmaCred0 := new(bn256.G2)
 	sigmaCred1 := new(bn256.G2)
@@ -223,9 +219,9 @@ func (s *SmartContract) deriveshow(APIstub shim.ChaincodeStubInterface, args []s
 
 	PBytes, _ := APIstub.GetState("BLCred_P")
 	BLCredP := big.NewInt(0).SetBytes(PBytes)
+	_rand := rand.New(rand.NewSource(time.Now().UnixNano()))
 	usk, _ := big.NewInt(0).SetString(args[1], 10)
 	uvkb, _ := APIstub.GetState("uvk")
-	uvk, _ := new(bn256.G2).Unmarshal(uvkb)
 	avkb, _ := APIstub.GetState("avk")
 	var avk RSVK
 	if !avk.FromBytes(avkb, 64, 128, 4) {
@@ -248,11 +244,27 @@ func (s *SmartContract) deriveshow(APIstub shim.ChaincodeStubInterface, args []s
 
 	rs := new(RS)
 	rs.Init(BLCredP)
+	// FIXIT: next line will raise a error
 	sigmad := rs.Derive(avk, sigmaCred, String2D(args[2]), args[3:])
 
 	nizk := new(NIZK)
 	nizk.Init(BLCredP)
-	piNIZK := nizk.ProveK(args[3:], uvk, sigmas, sigmad)
+	mbuf := bytes.NewBuffer([]byte{})
+	for _, v := range args[3:] {
+		binary.Write(mbuf, binary.BigEndian, v)
+	}
+	binary.Write(mbuf, binary.BigEndian, uvkb)
+	binary.Write(mbuf, binary.BigEndian, sigmas.Marshal())
+	binary.Write(mbuf, binary.BigEndian, sigmad.Bytes())
+	mi := make([]string, 1)
+	mi[0] = string(mbuf.Bytes())
+	S := big.NewInt(0).Rand(_rand, BLCredP)
+	P := new(bn256.G2).ScalarBaseMult(big.NewInt(0).Rand(_rand, BLCredP))
+	Q := make([]*bn256.G2, 1)
+	Q[0] = new(bn256.G2).ScalarBaseMult(big.NewInt(0).Rand(_rand, BLCredP))
+	piNIZK := nizk.ProveK(mi, S, P, Q)
+	APIstub.PutState("P", P.Marshal())
+	APIstub.PutState("Q", Q[0].Marshal())
 
 	buf := bytes.NewBuffer([]byte{})
 	binary.Write(buf, binary.BigEndian, piNIZK.NIZKC.Marshal()) // 128 bytes
@@ -294,13 +306,18 @@ func (s *SmartContract) credverify(APIstub shim.ChaincodeStubInterface, args []s
 
 	nizk := new(NIZK)
 	nizk.Init(BLCredP)
-	result1 := nizk.VerifyK(piNIZK)
+	Pb, _ := APIstub.GetState("P")
+	P, _ := new(bn256.G2).Unmarshal(Pb)
+	Q0b, _ := APIstub.GetState("Q")
+	Q := make([]*bn256.G2, 1)
+	Q[0], _ = new(bn256.G2).Unmarshal(Q0b)
+	result1 := nizk.VerifyK(piNIZK, P, Q)
 
 	buf := bytes.NewBuffer([]byte{})
 	binary.Write(buf, binary.BigEndian, piNIZK.NIZKC.Marshal()) // 128 bytes
 	binary.Write(buf, binary.BigEndian, piNIZK.NIZKc.Bytes())   // 8 bytes
 	for _, v := range piNIZK.NIZKr {
-		binary.Write(buf, binary.BigEndian, []byte(v.Bytes())) // 8*n bytes
+		binary.Write(buf, binary.BigEndian, []byte(v.Bytes())) // 32*n bytes
 	}
 	otsvk := string(append(sigmaShow.X.Marshal(), sigmaShow.Y.Marshal()...))
 	m := string(buf.Bytes()) + string(args[0]) + otsvk
