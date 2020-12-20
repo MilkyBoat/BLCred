@@ -75,13 +75,16 @@ func (nizk *NIZK) ProveK(m []string, s *big.Int, P *bn256.G2, Q []*bn256.G2) NIZ
 	r := make([]*big.Int, n+1)
 	for i := 0; i < n; i++ {
 		msg := big.NewInt(0).SetBytes(hash.Sum([]byte(m[i])))
+
 		// if i == 0 {
 		// 	println(len(big.NewInt(0).Mul(msg, c).Bytes()))
 		// }
-		/* note that length of hash result shouldn`t bigger than half of len(bn256.Order)
-		 * len(msg.Byte()) <= 16
-		 * else the algorithm will get error result
+
+		/* note that length of hash result shouldn`t longer than half of len(bn256.Order)=32
+		 * or len(msg.Byte()) <= 16
+		 * else the function will get wrong result
 		 */
+
 		r[i] = big.NewInt(0).Sub(w[i], msg.Mul(msg, c))
 	}
 	r[n] = big.NewInt(0).Sub(w[n], big.NewInt(0).Mul(c, s))
