@@ -187,15 +187,15 @@ func (s *SmartContract) issuecred(APIstub shim.ChaincodeStubInterface, args []st
 	sigmaCred1 := new(bn256.G2)
 	if nizk.VerifyK(pik, P, Q) && nizk.VerifyDL(pidl, Q) {
 		w := big.NewInt(0).Rand(r, BLCredP)
-		sigmaCred0 = sigmaCred0.ScalarMult(uvk, w)
-		sigmaCred1 = sigmaCred1.Add(avk.VK_X, pik.NIZKC)
-		sigmaCred1 = sigmaCred1.ScalarMult(sigmaCred1, w)
+		sigmaCred0.ScalarMult(uvk, w)
+		sigmaCred1.Add(avk.VK_X, pik.NIZKC)
+		sigmaCred1.ScalarMult(sigmaCred1, w)
 	} else {
 		panic("Auth check failed!")
 	}
-	sigmaCred1 = sigmaCred1.ScalarMult(sigmaCred1, S)
-	sigmaCred1 = sigmaCred1.Neg(sigmaCred1)
-	sigmaCred1 = sigmaCred1.Add(sigmaCred0, sigmaCred1)
+	sigmaCred1.ScalarMult(sigmaCred1, S)
+	temp := new(bn256.G2).Neg(sigmaCred1)
+	sigmaCred1.Add(sigmaCred0, temp)
 
 	sigmaCred := SIGMA{
 		new(bn256.G1).ScalarBaseMult(big.NewInt(1)),
@@ -223,11 +223,11 @@ func (s *SmartContract) deriveshow(APIstub shim.ChaincodeStubInterface, args []s
 	usk, _ := big.NewInt(0).SetString(args[1], 10)
 	uvkb, _ := APIstub.GetState("uvk")
 	avkb, _ := APIstub.GetState("avk")
-	var avk RSVK
+	avk := new(RSVK)
 	if !avk.FromBytes(avkb, 64, 128, 4) {
 		return shim.Error("Decode avk failure.")
 	}
-	var sigmaCred SIGMA
+	sigmaCred := new(SIGMA)
 	sigmaCredb, _ := APIstub.GetState("sigmaCred")
 	if !sigmaCred.FromBytes(sigmaCredb) {
 		return shim.Error("Decode sigmaCred failure.")
@@ -244,8 +244,7 @@ func (s *SmartContract) deriveshow(APIstub shim.ChaincodeStubInterface, args []s
 
 	rs := new(RS)
 	rs.Init(BLCredP)
-	// FIXIT: next line will raise a error
-	sigmad := rs.Derive(avk, sigmaCred, String2D(args[2]), args[3:])
+	sigmad := rs.Derive(*avk, *sigmaCred, String2D(args[2]), args[3:])
 
 	nizk := new(NIZK)
 	nizk.Init(BLCredP)
@@ -292,11 +291,6 @@ func (s *SmartContract) credverify(APIstub shim.ChaincodeStubInterface, args []s
 	PBytes, _ := APIstub.GetState("BLCred_P")
 	BLCredP := big.NewInt(0).SetBytes(PBytes)
 
-	avkb, _ := APIstub.GetState("avk")
-	var avk RSVK
-	if !avk.FromBytes(avkb, 64, 128, 4) {
-		return shim.Error("Decode avk failure.")
-	}
 	var sigmaShow SigmaShow
 	sigmaShowb, _ := APIstub.GetState("sigmaShow")
 	if !sigmaShow.fromBytes(sigmaShowb) {

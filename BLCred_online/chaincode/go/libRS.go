@@ -137,11 +137,12 @@ func (s *SIGMA) FromBytes(buf []byte) bool {
 	if len(buf) != 384 {
 		return false
 	}
-	s.sigma1, _ = new(bn256.G1).Unmarshal(buf[:64])
-	s.sigma2, _ = new(bn256.G1).Unmarshal(buf[64:192])
-	s.sigma11, _ = new(bn256.G2).Unmarshal(buf[192:256])
-	s.sigma21, _ = new(bn256.G2).Unmarshal(buf[256:])
-	return true
+	var r1, r2, r3, r4 bool
+	s.sigma1, r1 = new(bn256.G1).Unmarshal(buf[0:64])
+	s.sigma2, r2 = new(bn256.G1).Unmarshal(buf[64:128])
+	s.sigma11, r3 = new(bn256.G2).Unmarshal(buf[128:256])
+	s.sigma21, r4 = new(bn256.G2).Unmarshal(buf[256:384])
+	return r1 && r2 && r3 && r4
 }
 
 // Init (p)
