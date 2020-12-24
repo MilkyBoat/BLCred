@@ -47,7 +47,7 @@ python3 BLCred.py
 
 You can find a basic tutorials on environment configuration here: [Getting Started](https://hyperledger-fabric.readthedocs.io/en/latest/getting_started.html)
 
-we use a [third party bilinearity](https://github.com/drbh/zkproofs/tree/master/go-ethereum/crypto/bn256) lib instead of bn256 of go language, install it with
+we use a third party [bilinearity lib](https://github.com/drbh/zkproofs/tree/master/go-ethereum/crypto/bn256) instead of bn256 of go language, install it with
 
 ```bash
 go get github.com/drbh/zkproofs/go-ethereum/crypto/bn256
@@ -62,6 +62,6 @@ cd BLCred_online/app
 ./stopFabric.sh
 ```
 
-startFabric.sh will start a Fabric network and install the chaincode, then testBLCred.sh will execute the NodeJS script one by one, enrollAdmin, registerUser, and executes the chaincode function one by one.
+startFabric.sh will start a Fabric network and install the chaincode, then testBLCred.sh will execute the NodeJS scripts: enrollAdmin.js, registerUser.js, and invoke,js will execute the chaincode functions.
 
 If all goes well, it will print the time spent by each chaincode function and finally print "credverify successful"
