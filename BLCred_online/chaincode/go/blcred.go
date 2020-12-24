@@ -76,37 +76,43 @@ func (s *SmartContract) Init(APIstub shim.ChaincodeStubInterface) sc.Response {
 func (s *SmartContract) Invoke(APIstub shim.ChaincodeStubInterface) sc.Response {
 
 	function, args := APIstub.GetFunctionAndParameters()
+	payload := []byte("")
+	start := time.Now()
 
 	if function == "setup" {
-		return s.setup(APIstub)
+		payload = s.setup(APIstub)
 	} else if function == "authkeygen" {
-		return s.authkeygen(APIstub, args)
+		payload = s.authkeygen(APIstub, args)
 	} else if function == "ukeygen" {
-		return s.ukeygen(APIstub)
+		payload = s.ukeygen(APIstub)
 	} else if function == "issuecred" {
-		return s.issuecred(APIstub, args)
+		payload = s.issuecred(APIstub, args)
 	} else if function == "deriveshow" {
-		return s.deriveshow(APIstub, args)
+		payload = s.deriveshow(APIstub, args)
 	} else if function == "credverify" {
-		return s.credverify(APIstub, args)
+		payload = s.credverify(APIstub, args)
+	} else {
+		return shim.Error("Invalid Smart Contract function name.")
 	}
 
-	return shim.Error("Invalid Smart Contract function name.")
+	result := fmt.Sprintf("%s|%s", time.Since(start), payload)
+
+	return shim.Success([]byte(result))
 }
 
 // setup()
-func (s *SmartContract) setup(APIstub shim.ChaincodeStubInterface) sc.Response {
+func (s *SmartContract) setup(APIstub shim.ChaincodeStubInterface) []byte {
 	P, _ := big.NewInt(0).SetString("18446744073709551557", 10)
 	APIstub.PutState("BLCred_P", P.Bytes())
 	// do nothing if use NIZK schnor
-	return shim.Success(nil)
+	return nil
 }
 
 // authkeygen(n)
-func (s *SmartContract) authkeygen(APIstub shim.ChaincodeStubInterface, args []string) sc.Response {
+func (s *SmartContract) authkeygen(APIstub shim.ChaincodeStubInterface, args []string) []byte {
 
 	if len(args) != 1 {
-		return shim.Error("Incorrect number of arguments. Expecting 1")
+		return []byte("Incorrect number of arguments. Expecting 1")
 	}
 
 	PBytes, _ := APIstub.GetState("BLCred_P")
@@ -122,11 +128,11 @@ func (s *SmartContract) authkeygen(APIstub shim.ChaincodeStubInterface, args []s
 	buf := bytes.NewBuffer([]byte{})
 	binary.Write(buf, binary.BigEndian, rssk.Bytes())
 
-	return shim.Success(buf.Bytes())
+	return buf.Bytes()
 }
 
 // ukeygen()
-func (s *SmartContract) ukeygen(APIstub shim.ChaincodeStubInterface) sc.Response {
+func (s *SmartContract) ukeygen(APIstub shim.ChaincodeStubInterface) []byte {
 
 	PBytes, _ := APIstub.GetState("BLCred_P")
 	BLCredP := big.NewInt(0).SetBytes(PBytes)
@@ -139,7 +145,7 @@ func (s *SmartContract) ukeygen(APIstub shim.ChaincodeStubInterface) sc.Response
 	APIstub.PutState("uvk", vk.Marshal())
 	bsk := sk.String()
 
-	return shim.Success([]byte(bsk))
+	return []byte(bsk)
 }
 
 // issuecred(m1,m2 ...)
@@ -151,10 +157,10 @@ func (s *SmartContract) ukeygen(APIstub shim.ChaincodeStubInterface) sc.Response
  * In this project, we want to simplified the code and we merged them into
  * one function. This will not significantly affect the results or performance.
  */
-func (s *SmartContract) issuecred(APIstub shim.ChaincodeStubInterface, args []string) sc.Response {
+func (s *SmartContract) issuecred(APIstub shim.ChaincodeStubInterface, args []string) []byte {
 
 	if len(args) <= 1 {
-		return shim.Error("Incorrect number of arguments. Expecting at least 1")
+		return []byte("Incorrect number of arguments. Expecting at least 1")
 	}
 
 	PBytes, _ := APIstub.GetState("BLCred_P")
@@ -165,7 +171,7 @@ func (s *SmartContract) issuecred(APIstub shim.ChaincodeStubInterface, args []st
 	avkb, _ := APIstub.GetState("avk")
 	avk := new(RSVK)
 	if !avk.FromBytes(avkb, 64, 128, 4) {
-		return shim.Error("Decode avk failure.")
+		return []byte("Decode avk failure.")
 	}
 
 	// user part:
@@ -207,14 +213,14 @@ func (s *SmartContract) issuecred(APIstub shim.ChaincodeStubInterface, args []st
 	sigmaCredb := sigmaCred.Bytes()
 	APIstub.PutState("sigmaCred", sigmaCredb)
 
-	return shim.Success(sigmaCredb)
+	return sigmaCredb
 }
 
 // deriveshow(phi,usk,D,m...)
-func (s *SmartContract) deriveshow(APIstub shim.ChaincodeStubInterface, args []string) sc.Response {
+func (s *SmartContract) deriveshow(APIstub shim.ChaincodeStubInterface, args []string) []byte {
 
 	if len(args) < 4 {
-		return shim.Error("Incorrect number of arguments. Expecting at least 4")
+		return []byte("Incorrect number of arguments. Expecting at least 4")
 	}
 
 	PBytes, _ := APIstub.GetState("BLCred_P")
@@ -225,12 +231,12 @@ func (s *SmartContract) deriveshow(APIstub shim.ChaincodeStubInterface, args []s
 	avkb, _ := APIstub.GetState("avk")
 	avk := new(RSVK)
 	if !avk.FromBytes(avkb, 64, 128, 4) {
-		return shim.Error("Decode avk failure.")
+		return []byte("Decode avk failure.")
 	}
 	sigmaCred := new(SIGMA)
 	sigmaCredb, _ := APIstub.GetState("sigmaCred")
 	if !sigmaCred.FromBytes(sigmaCredb) {
-		return shim.Error("Decode sigmaCred failure.")
+		return []byte("Decode sigmaCred failure.")
 	}
 
 	fbb := new(FBB)
@@ -278,14 +284,14 @@ func (s *SmartContract) deriveshow(APIstub shim.ChaincodeStubInterface, args []s
 	sigmaShowb := sigmaShow.bytes()
 	APIstub.PutState("sigmaShow", sigmaShowb)
 
-	return shim.Success(sigmaShowb)
+	return sigmaShowb
 }
 
 // credverify(phi)
-func (s *SmartContract) credverify(APIstub shim.ChaincodeStubInterface, args []string) sc.Response {
+func (s *SmartContract) credverify(APIstub shim.ChaincodeStubInterface, args []string) []byte {
 
 	if len(args) != 1 {
-		return shim.Error("Incorrect number of arguments. Expecting 1")
+		return []byte("Incorrect number of arguments. Expecting 1")
 	}
 
 	PBytes, _ := APIstub.GetState("BLCred_P")
@@ -294,7 +300,7 @@ func (s *SmartContract) credverify(APIstub shim.ChaincodeStubInterface, args []s
 	var sigmaShow SigmaShow
 	sigmaShowb, _ := APIstub.GetState("sigmaShow")
 	if !sigmaShow.fromBytes(sigmaShowb) {
-		return shim.Error("Decode sigmaShow failure.")
+		return []byte("Decode sigmaShow failure.")
 	}
 	piNIZK := sigmaShow.pi
 
@@ -320,9 +326,9 @@ func (s *SmartContract) credverify(APIstub shim.ChaincodeStubInterface, args []s
 	fbb.Init(BLCredP)
 	result2 := fbb.Verify(&sigmaShow.X, &sigmaShow.Y, m, &sigmaShow.sigma, &sigmaShow.r)
 	if result1 && result2 {
-		return shim.Success([]byte("1"))
+		return []byte("1")
 	}
-	return shim.Success([]byte("0"))
+	return []byte("0")
 }
 
 func main() {

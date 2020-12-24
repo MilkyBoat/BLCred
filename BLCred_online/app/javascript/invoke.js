@@ -41,21 +41,25 @@ async function main() {
         const p = await contract.submitTransaction('setup');
         console.log('setup transaction has been submitted');
         console.timeEnd('setup')
+        console.log('go inner timer: ', p.toString().split('|')[0])
         console.log('length of data: ', p.length);
 
         console.time('authkeygen')
         const ask = await contract.submitTransaction('authkeygen', '4');
         console.log('authkeygen transaction has been submitted');
         console.timeEnd('authkeygen')
+        console.log('go inner timer: ', ask.toString().split('|')[0])
         console.log('length of data: ', ask.length);
         let fask = path.resolve(__dirname, 'data', 'ask')
         fs.writeFile(fask, ask, err => {})
 
         console.time('ukeygen')
-        const usk = await contract.submitTransaction('ukeygen');
+        var usk = await contract.submitTransaction('ukeygen');
         console.log('ukeygen transaction has been submitted');
         console.timeEnd('ukeygen')
+        console.log('go inner timer: ', usk.toString().split('|')[0])
         console.log('length of data: ', usk.length);
+        usk = usk.toString().split('|')[1]
         let fusk = path.resolve(__dirname, 'data', 'usk')
         fs.writeFile(fusk, usk, err => {})
 
@@ -64,6 +68,7 @@ async function main() {
         const sigmaCred = await contract.submitTransaction('issuecred', m[0], m[1], m[2], m[3]);
         console.log('issuecred transaction has been submitted');
         console.timeEnd('issuecred')
+        console.log('go inner timer: ', sigmaCred.toString().split('|')[0])
         console.log('length of data: ', sigmaCred.length);
         let fsigmaCred = path.resolve(__dirname, 'data', 'sigmaCred')
         fs.writeFile(fsigmaCred, sigmaCred, err => {})
@@ -71,16 +76,18 @@ async function main() {
         var phi = 'BLCredTestPhi'
         var D = '1001'
         console.time('deriveshow')
-        const sigmaShow = await contract.submitTransaction('deriveshow', phi, usk.toString(), D, m[0], m[1], m[2], m[3]);
+        const sigmaShow = await contract.submitTransaction('deriveshow', phi, usk, D, m[0], m[1], m[2], m[3]);
         console.log('deriveshow transaction has been submitted');
         console.timeEnd('deriveshow')
+        console.log('go inner timer: ', sigmaShow.toString().split('|')[0])
         console.log('length of data: ', sigmaShow.length);
 
         console.time('credverify')
         const result = await contract.submitTransaction('credverify', phi);
         console.log('credverify transaction has been submitted');
         console.timeEnd('credverify')
-        if (result.toString() == '1') {
+        console.log('go inner timer: ', result.toString().split('|')[0])
+        if (result.toString().split('|')[1] == '1') {
             console.log('credverify successful');
         }
         else {
