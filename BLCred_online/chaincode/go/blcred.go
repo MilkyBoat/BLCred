@@ -159,7 +159,7 @@ func (s *SmartContract) ukeygen(APIstub shim.ChaincodeStubInterface) []byte {
  */
 func (s *SmartContract) issuecred(APIstub shim.ChaincodeStubInterface, args []string) []byte {
 
-	if len(args) <= 1 {
+	if len(args) < 1 {
 		return []byte("Incorrect number of arguments. Expecting at least 1")
 	}
 
