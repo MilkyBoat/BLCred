@@ -62,6 +62,6 @@ cd BLCred_online/app
 ./stopFabric.sh
 ```
 
-`startFabric.sh` will start a Fabric network and install the chaincode, then `testBLCred.sh` will execute the NodeJS scripts: `enrollAdmin.js`, `registerUser.js`, and `invoke,js` will execute the chaincode functions.
+`startFabric.sh` will start a Fabric network and install the chaincode, then `testBLCred.sh` will execute the NodeJS scripts: `enrollAdmin.js`, `registerUser.js`, and `invoke.js` will execute the chaincode functions.
 
 If all goes well, it will print the time spent by each chaincode function and finally print "`credverify successful`"
