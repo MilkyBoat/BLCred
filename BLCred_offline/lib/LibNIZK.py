@@ -34,7 +34,7 @@ class NIZK:
             Q_.append(Q[i].export())
         C_ = C.export()
         W_ = W.export()
-        print("W_为",W_)
+        # print("W_ is ",W_)
         # (2)将P_,Q_[],C_,W_顺次拼接在一起,得到二进制串bytestr
         bytestr = P_
         for i in range(n):
@@ -42,8 +42,8 @@ class NIZK:
         bytestr += C_ + W_
         # (3)将二进制串bytestr转换成字符串str0
         str0 = str(bytestr)
-        # (4)调用hashlib中的md5函数,将str0映射成为十六进制数字c,再进一步转换为Bn类型的大整数对象
-        c = hashlib.md5(str0.encode('utf8')).hexdigest()
+        # (4)调用hashlib中的sha1函数,将str0映射成为十六进制数字c,再进一步转换为Bn类型的大整数对象
+        c = hashlib.sha1(str0.encode('utf8')).hexdigest()
         c = Bn.from_hex(str(c))
         # 得到ri
         r = []
@@ -81,8 +81,8 @@ class NIZK:
         bytestr += C_ + Sigma_
         # (3)将二进制串bytestr转换成字符串str0
         str0 = str(bytestr)
-        # (4)调用hashlib中的md5函数,将str0映射成为十六进制数字c_,再进一步转换为Bn类型的大整数对象c_
-        c_ = hashlib.md5(str0.encode('utf8')).hexdigest()
+        # (4)调用hashlib中的sha1函数,将str0映射成为十六进制数字c_,再进一步转换为Bn类型的大整数对象c_
+        c_ = hashlib.sha1(str0.encode('utf8')).hexdigest()
         c_ = Bn.from_hex(str(c_))
         return c_==c
 
@@ -114,8 +114,8 @@ class NIZK:
         bytestr += C_ + W_
         # (3)将二进制串bytestr转换成字符串str0
         str0 = str(bytestr)
-        # (4)调用hashlib中的md5函数,将str0映射成为十六进制数字c,再进一步转换为Bn类型的大整数对象
-        c = hashlib.md5(str0.encode('utf8')).hexdigest()
+        # (4)调用hashlib中的sha1函数,将str0映射成为十六进制数字c,再进一步转换为Bn类型的大整数对象
+        c = hashlib.sha1(str0.encode('utf8')).hexdigest()
         c = Bn.from_hex(str(c))
         # 得到ri
         r = []
@@ -150,41 +150,41 @@ class NIZK:
         bytestr += C_ + Sigma_
         # (3)将二进制串bytestr转换成字符串str0
         str0 = str(bytestr)
-        # (4)调用hashlib中的md5函数,将str0映射成为十六进制数字c_,再进一步转换为Bn类型的大整数对象c_
-        c_ = hashlib.md5(str0.encode('utf8')).hexdigest()
+        # (4)调用hashlib中的sha1函数,将str0映射成为十六进制数字c_,再进一步转换为Bn类型的大整数对象c_
+        c_ = hashlib.sha1(str0.encode('utf8')).hexdigest()
         c_ = Bn.from_hex(str(c_))
         return c_==c
 
 
 
-# 测试样例
 if __name__ == "__main__":
-    # 得到m,s,P,Q
+    # get m,s,P,Q
+    p = Bn.get_prime(100)
     G = bp.BpGroup()
     g1 = G.gen1()
-    # size是n,因为是从1到n,共n个元素
+    # size is n, index count from 1 to n
     size = 5
     P = 10 * g1
     Q = []
-    for i in range(size):
-        Q.append( 3 * i * g1)     
+    for _ in range(size):
+        Q.append(p.random() * g1)
     s = 50
     m = []
     for i in range(size):
         m.append(4 * i) 
     #print(m,s,P,Q)
-    # 得到大质数p
+    # get prime p
     p = Bn.get_prime(100)
-    # 验证proveK函数
+    # test proveK function
     nizk = NIZK(p)
     pi = nizk.proveK(m,s,P,Q)
-    #print("pi为:",pi)
-    # 验证verifyK函数
+    #print("pi is ",pi)
+    # test verifyK function
     result = nizk.verifyK(pi,P,Q)
-    print("verifyK的结果为",result)
-    # 验证proveDL函数
+    print("result of verifyK is",result)
+    # test proveDL function
     pi = nizk.proveDL(m,Q)
-    #print("pi为",pi)
-    # 验证verifyDL函数
+    #print("pi is ",pi)
+    # test verifyDL function
     result = nizk.verifyDL(pi,Q)
-    print("verifyDL的结果为",result)
+    print("result of verifyDL is",result)
