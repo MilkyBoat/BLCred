@@ -176,6 +176,6 @@ if __name__ == "__main__":
     # print("sigma_show is ",sigma_show)
     print("sigma_show is ",sigma_show)
 
-    # # 测试Crederify
+    # # 测试Credverify
     # result = blcred.credverify(avk,sigma_show,phi)
     # print(result)
