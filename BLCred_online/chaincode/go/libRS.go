@@ -294,7 +294,7 @@ func min(a int, b int) int {
 func D2string(D []bool) string {
 	s := ""
 	for _, v := range D {
-		if v == true {
+		if v {
 			s += "1"
 		} else {
 			s += "0"

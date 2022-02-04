@@ -265,14 +265,14 @@ func (s *SmartContract) issuecred(APIstub shim.ChaincodeStubInterface, args []st
 // deriveshow(phi,usk,D,m...)
 func (s *SmartContract) deriveshow(APIstub shim.ChaincodeStubInterface, args []string) []byte {
 
-	if len(args) < 4 {
+	if len(args) < 3 {
 		return []byte("Incorrect number of arguments. Expecting at least 4")
 	}
 
 	PBytes, _ := APIstub.GetState("BLCred_P")
 	BLCredP := big.NewInt(0).SetBytes(PBytes)
 	_rand := rand.New(rand.NewSource(time.Now().UnixNano()))
-	usk, _ := big.NewInt(0).SetString(args[1], 10)
+	usk, _ := big.NewInt(0).SetString(args[0], 10)
 	uvkb, _ := APIstub.GetState("uvk")
 	uvk, _ := new(bn256.G2).Unmarshal(uvkb)
 	avkb, _ := APIstub.GetState("avk")
@@ -288,7 +288,7 @@ func (s *SmartContract) deriveshow(APIstub shim.ChaincodeStubInterface, args []s
 
 	rs := new(RS)
 	rs.Init(BLCredP)
-	sigmad := rs.Derive(*avk, *sigmaCred, String2D(args[2]), args[3:])
+	sigmad := rs.Derive(*avk, *sigmaCred, String2D(args[1]), args[2:])
 
 	tag := big.NewInt(0).Rand(_rand, BLCredP)
 	hash := md5.New()
@@ -297,7 +297,7 @@ func (s *SmartContract) deriveshow(APIstub shim.ChaincodeStubInterface, args []s
 	nizk := new(NIZK)
 	nizk.Init(BLCredP)
 	mbuf := bytes.NewBuffer([]byte{})
-	for _, v := range args[3:] {
+	for _, v := range args[2:] {
 		binary.Write(mbuf, binary.BigEndian, []byte(v))
 	}
 	binary.Write(mbuf, binary.BigEndian, uvkb)
@@ -321,7 +321,7 @@ func (s *SmartContract) deriveshow(APIstub shim.ChaincodeStubInterface, args []s
 
 // link(sigmashow1, sigmashow2) (encode with base64)
 func (s *SmartContract) link(APIstub shim.ChaincodeStubInterface, args []string) bool {
-	return args[1] == args[2]
+	return args[0] == args[1]
 }
 
 // credverify(phi)
