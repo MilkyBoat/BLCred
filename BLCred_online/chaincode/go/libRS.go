@@ -4,14 +4,17 @@ import (
 	"bytes"
 	"crypto/md5"
 	"encoding/binary"
+
 	// "golang.org/x/crypto/bn256"
-	"github.com/drbh/zkproofs/go-ethereum/crypto/bn256"
 	"math/big"
 	"math/rand"
 	"time"
+
+	"github.com/drbh/zkproofs/go-ethereum/crypto/bn256"
 )
 
 // RS class
+// Redactable Signatures
 type RS struct {
 	P *big.Int
 }

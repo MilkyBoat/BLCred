@@ -4,6 +4,7 @@ go 1.13
 
 require (
 	github.com/drbh/zkproofs v0.0.0-20190422142427-03ebb9eaf8d6
+	github.com/google/go-cmp v0.2.0
 	github.com/hyperledger/fabric-chaincode-go v0.0.0-20200128192331-2d899240a7ed
 	github.com/hyperledger/fabric-protos-go v0.0.0-20200124220212-e9cfc186ba7b
 	golang.org/x/net v0.0.0-20200202094626-16171245cfb2 // indirect
