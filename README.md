@@ -6,7 +6,7 @@
 
 ## Offline version
 
-> An offline implement of BLCred system based on python
+> An half on-chain implement of BLCred system based on python. blockchain is only responsible for recording credentials.
 
 ### Prerequisites and setup:
 
@@ -36,7 +36,7 @@ python3 BLCred.py
 
 ## Online version
 
-> An online implement of BLCred system with HyperlederFabric based on go and nodejs
+> An completely on-chain implement of BLCred system with HyperlederFabric based on go and nodejs
 
 ### Prerequisites and setup:
 
@@ -64,4 +64,4 @@ cd BLCred_online/app
 
 `startFabric.sh` will start a Fabric network and install the chaincode, then `testBLCred.sh` will execute the NodeJS scripts: `enrollAdmin.js`, `registerUser.js`, and `invoke.js` will execute the chaincode functions.
 
-If all goes well, it will print the time spent by each chaincode function and finally print "`credverify successful`"
+If all goes well, it will print the time spent by each chaincode function
