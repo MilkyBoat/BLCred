@@ -43,17 +43,17 @@ func (s *SigmaShow) bytes() []byte {
 }
 
 func (s *SigmaShow) fromBytes(buf []byte) bool {
-	if len(buf) < 528 || (len(buf)-464)%32 != 0 {
+	if len(buf) < 176 || (len(buf)-144)%32 != 0 {
 		return false
 	}
-	s.LK = *big.NewInt(0).SetBytes(buf[64:72])
+	s.LK = *big.NewInt(0).SetBytes(buf[:8])
 	s.pi = *new(NIZKPI)
-	s.pi.NIZKC, _ = new(bn256.G2).Unmarshal(buf[328:456])
-	s.pi.NIZKc = big.NewInt(0).SetBytes(buf[456:464])
-	n := (len(buf) - 464) / 32
+	s.pi.NIZKC, _ = new(bn256.G2).Unmarshal(buf[8:136])
+	s.pi.NIZKc = big.NewInt(0).SetBytes(buf[136:144])
+	n := (len(buf) - 144) / 32
 	s.pi.NIZKr = make([]*big.Int, n)
 	for i := 0; i < n; i++ {
-		s.pi.NIZKr[i] = big.NewInt(0).SetBytes(buf[464+i*32 : 464+(i+1)*32])
+		s.pi.NIZKr[i] = big.NewInt(0).SetBytes(buf[144+i*32 : 144+(i+1)*32])
 	}
 	return true
 }
@@ -214,9 +214,13 @@ func (s *SmartContract) issue(BLCredP *big.Int, pik NIZKPI, pidl NIZKPI, Q []*bn
 
 // [inner function]unblind : (user)
 func (s *SmartContract) unblind(sigmaCred SIGMA, S *big.Int) SIGMA {
-	temp := new(bn256.G2).ScalarMult(sigmaCred.sigma11, S)
-	temp.Neg(temp)
+	temp := new(bn256.G2).Neg(sigmaCred.sigma11)
+	temp.ScalarMult(temp, S)
 	sigmaCred.sigma21.Add(sigmaCred.sigma21, temp)
+
+	// temp := new(bn256.G2).ScalarMult(sigmaCred.sigma11, S)
+	// temp.Neg(temp)
+	// sigmaCred.sigma21.Add(sigmaCred.sigma21, temp)
 	return sigmaCred
 }
 
@@ -252,6 +256,7 @@ func (s *SmartContract) issuecred(APIstub shim.ChaincodeStubInterface, args []st
 
 	// auth part:
 	sigmaCred := s.issue(BLCredP, pik, pidl, Q, avk, C, uvk)
+
 	// user part
 	sigmaCred = s.unblind(sigmaCred, S)
 
@@ -281,12 +286,6 @@ func (s *SmartContract) deriveshow(APIstub shim.ChaincodeStubInterface, args []s
 	}
 	sigmaCred := new(SIGMA)
 	sigmaCredb, _ := APIstub.GetState("sigmaCred")
-	// _, r1 := new(bn256.G1).Unmarshal(sigmaCredb[:64])
-	// _, r2 := new(bn256.G1).Unmarshal(sigmaCredb[64:128])
-	// _, r3 := new(bn256.G2).Unmarshal(sigmaCredb[128:256])
-	// _, r4 := new(bn256.G2).Unmarshal(sigmaCredb[256:])
-	// loginfo := fmt.Sprintf("%d,%t,%t,%t,%t", len(sigmaCredb), r1, r2, r3, r4)
-	// return []byte(loginfo)
 	if !sigmaCred.FromBytes(sigmaCredb) {
 		panic("Decode sigmaCred failure.")
 	}

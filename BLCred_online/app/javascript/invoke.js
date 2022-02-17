@@ -37,9 +37,9 @@ async function main() {
         const contract = network.getContract('blcred');
 
         // data used in test
-        var n = '4'
-        var m = ["nezuko", "kawaii", "hhh", "lol2333"]
-        var D = '1001'
+        var n = '16'
+        var m = ["nezuko", "kawaii", "hhh", "lol2333", "ohhhh", "aha", "blcred", "ohyeah", "nezuko", "kawaii", "hhh", "lol2333", "ohhhh", "aha", "blcred", "ohyeah"].slice(0, n)
+        var D = '1001010101001011'.substring(0, n)
 
         // Submit transaction.
         console.time('setup')
@@ -79,21 +79,21 @@ async function main() {
         fs.writeFile(fssk, ssk, err => {})
 
         console.time('issuecred')
-        const sigmaCred = await contract.submitTransaction('issuecred', m[0], m[1], m[2], m[3]);
+        const sigmaCred = await contract.submitTransaction('issuecred', ...m);
         console.log('issuecred transaction has been submitted');
         console.timeEnd('issuecred')
         console.log('go inner timer: ', sigmaCred.toString().split('|')[0])
-        console.log('length of data: ', sigmaCred.toString().split('|')[1].length);
+        console.log('length of data: ', sigmaCred.length - sigmaCred.toString().split('|')[0].length - 1);
         let fsigmaCred = path.resolve(__dirname, 'data', 'sigmaCred')
         fs.writeFile(fsigmaCred, sigmaCred, err => {})
 
         console.time('deriveshow')
-        const sigmaShow = await contract.submitTransaction('deriveshow', usk, D, m[0], m[1], m[2], m[3]);
+        const sigmaShow = await contract.submitTransaction('deriveshow', usk, D, ...m);
         console.log('deriveshow transaction has been submitted');
         console.timeEnd('deriveshow')
         console.log('go inner timer: ', sigmaShow.toString().split('|')[0])
-        console.log(sigmaShow.toString().split('|')[1])
-        console.log('length of data: ', sigmaShow.toString().split('|')[1].length);
+        // console.log(sigmaShow.toString().split('|')[1])
+        console.log('length of data: ', sigmaShow.length - sigmaShow.toString().split('|')[0].length - 1);
 
         // console.time('credverify')
         // const result = await contract.submitTransaction('credverify', phi);
