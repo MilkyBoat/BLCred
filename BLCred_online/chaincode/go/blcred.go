@@ -43,17 +43,17 @@ func (s *SigmaShow) bytes() []byte {
 }
 
 func (s *SigmaShow) fromBytes(buf []byte) bool {
-	if len(buf) < 528 || (len(buf)-464)%32 != 0 {
+	if len(buf) < 176 || (len(buf)-144)%32 != 0 {
 		return false
 	}
-	s.LK = *big.NewInt(0).SetBytes(buf[64:72])
+	s.LK = *big.NewInt(0).SetBytes(buf[:8])
 	s.pi = *new(NIZKPI)
-	s.pi.NIZKC, _ = new(bn256.G2).Unmarshal(buf[328:456])
-	s.pi.NIZKc = big.NewInt(0).SetBytes(buf[456:464])
-	n := (len(buf) - 464) / 32
+	s.pi.NIZKC, _ = new(bn256.G2).Unmarshal(buf[8:136])
+	s.pi.NIZKc = big.NewInt(0).SetBytes(buf[136:144])
+	n := (len(buf) - 144) / 32
 	s.pi.NIZKr = make([]*big.Int, n)
 	for i := 0; i < n; i++ {
-		s.pi.NIZKr[i] = big.NewInt(0).SetBytes(buf[464+i*32 : 464+(i+1)*32])
+		s.pi.NIZKr[i] = big.NewInt(0).SetBytes(buf[144+i*32 : 144+(i+1)*32])
 	}
 	return true
 }
@@ -109,7 +109,7 @@ func (s *SmartContract) setup(APIstub shim.ChaincodeStubInterface) []byte {
 func (s *SmartContract) ipkeygen(APIstub shim.ChaincodeStubInterface, args []string) []byte {
 
 	if len(args) != 1 {
-		return []byte("Incorrect number of arguments. Expecting 1")
+		panic("Incorrect number of arguments. Expecting 1")
 	}
 
 	PBytes, _ := APIstub.GetState("BLCred_P")
@@ -214,9 +214,13 @@ func (s *SmartContract) issue(BLCredP *big.Int, pik NIZKPI, pidl NIZKPI, Q []*bn
 
 // [inner function]unblind : (user)
 func (s *SmartContract) unblind(sigmaCred SIGMA, S *big.Int) SIGMA {
-	temp := new(bn256.G2).ScalarMult(sigmaCred.sigma21, S)
-	temp.Neg(temp)
+	temp := new(bn256.G2).Neg(sigmaCred.sigma11)
+	temp.ScalarMult(temp, S)
 	sigmaCred.sigma21.Add(sigmaCred.sigma21, temp)
+
+	// temp := new(bn256.G2).ScalarMult(sigmaCred.sigma11, S)
+	// temp.Neg(temp)
+	// sigmaCred.sigma21.Add(sigmaCred.sigma21, temp)
 	return sigmaCred
 }
 
@@ -232,7 +236,7 @@ func (s *SmartContract) unblind(sigmaCred SIGMA, S *big.Int) SIGMA {
 func (s *SmartContract) issuecred(APIstub shim.ChaincodeStubInterface, args []string) []byte {
 
 	if len(args) < 1 {
-		return []byte("Incorrect number of arguments. Expecting at least 1")
+		panic("Incorrect number of arguments. Expecting at least 1")
 	}
 
 	PBytes, _ := APIstub.GetState("BLCred_P")
@@ -243,8 +247,8 @@ func (s *SmartContract) issuecred(APIstub shim.ChaincodeStubInterface, args []st
 	// svk, _ := new(bn256.G2).Unmarshal(svkb)
 	avkb, _ := APIstub.GetState("avk")
 	avk := new(RSVK)
-	if !avk.FromBytes(avkb, 64, 128, 4) {
-		return []byte("Decode avk failure.")
+	if !avk.FromBytes(avkb, 64, 128, len(args)) {
+		panic("Decode avk failure.")
 	}
 
 	// user part:
@@ -262,11 +266,11 @@ func (s *SmartContract) issuecred(APIstub shim.ChaincodeStubInterface, args []st
 	return sigmaCredb
 }
 
-// deriveshow(phi,usk,D,m...)
+// deriveshow(usk,D,m...)
 func (s *SmartContract) deriveshow(APIstub shim.ChaincodeStubInterface, args []string) []byte {
 
 	if len(args) < 3 {
-		return []byte("Incorrect number of arguments. Expecting at least 4")
+		panic("Incorrect number of arguments. Expecting at least 3")
 	}
 
 	PBytes, _ := APIstub.GetState("BLCred_P")
@@ -277,13 +281,13 @@ func (s *SmartContract) deriveshow(APIstub shim.ChaincodeStubInterface, args []s
 	uvk, _ := new(bn256.G2).Unmarshal(uvkb)
 	avkb, _ := APIstub.GetState("avk")
 	avk := new(RSVK)
-	if !avk.FromBytes(avkb, 64, 128, 4) {
-		return []byte("Decode avk failure.")
+	if !avk.FromBytes(avkb, 64, 128, len(args)-2) {
+		panic("Decode avk failure.")
 	}
 	sigmaCred := new(SIGMA)
 	sigmaCredb, _ := APIstub.GetState("sigmaCred")
 	if !sigmaCred.FromBytes(sigmaCredb) {
-		return []byte("Decode sigmaCred failure.")
+		panic("Decode sigmaCred failure.")
 	}
 
 	rs := new(RS)

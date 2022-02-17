@@ -36,29 +36,34 @@ async function main() {
         // Get the contract from the network.
         const contract = network.getContract('blcred');
 
+        // data used in test
+        var n = '16'
+        var m = ["nezuko", "kawaii", "hhh", "lol2333", "ohhhh", "aha", "blcred", "ohyeah", "nezuko", "kawaii", "hhh", "lol2333", "ohhhh", "aha", "blcred", "ohyeah"].slice(0, n)
+        var D = '1001010101001011'.substring(0, n)
+
         // Submit transaction.
         console.time('setup')
         const p = await contract.submitTransaction('setup');
         console.log('setup transaction has been submitted');
         console.timeEnd('setup')
         console.log('go inner timer: ', p.toString().split('|')[0])
-        console.log('length of data: ', p.length);
+        console.log('length of data: ', p.toString().split('|')[1].length);
 
         console.time('ipkeygen')
-        const ask = await contract.submitTransaction('ipkeygen', '4');
+        const ask = await contract.submitTransaction('ipkeygen', n);
         console.log('ipkeygen transaction has been submitted');
         console.timeEnd('ipkeygen')
         console.log('go inner timer: ', ask.toString().split('|')[0])
-        console.log('length of data: ', ask.length);
+        console.log('length of data: ', ask.toString().split('|')[1].length);
         let fask = path.resolve(__dirname, 'data', 'ask')
-        fs.writeFile(fask, ask, err => {})
+        fs.writeFile(fask, ask.toString().split('|')[1], err => {})
 
         console.time('ukeygen')
         var usk = await contract.submitTransaction('ukeygen');
         console.log('ukeygen transaction has been submitted');
         console.timeEnd('ukeygen')
         console.log('go inner timer: ', usk.toString().split('|')[0])
-        console.log('length of data: ', usk.length);
+        console.log('length of data: ', usk.toString().split('|')[1].length);
         usk = usk.toString().split('|')[1]
         let fusk = path.resolve(__dirname, 'data', 'usk')
         fs.writeFile(fusk, usk, err => {})
@@ -68,28 +73,27 @@ async function main() {
         console.log('skeygen transaction has been submitted');
         console.timeEnd('skeygen')
         console.log('go inner timer: ', ssk.toString().split('|')[0])
-        console.log('length of data: ', ssk.length);
+        console.log('length of data: ', ssk.toString().split('|')[1].length);
         ssk = ssk.toString().split('|')[1]
         let fssk = path.resolve(__dirname, 'data', 'ssk')
         fs.writeFile(fssk, ssk, err => {})
 
-        var m = ["nezuko", "kawaii", "hhh", "lol2333"]
         console.time('issuecred')
-        const sigmaCred = await contract.submitTransaction('issuecred', m[0], m[1], m[2], m[3]);
+        const sigmaCred = await contract.submitTransaction('issuecred', ...m);
         console.log('issuecred transaction has been submitted');
         console.timeEnd('issuecred')
         console.log('go inner timer: ', sigmaCred.toString().split('|')[0])
-        console.log('length of data: ', sigmaCred.length);
+        console.log('length of data: ', sigmaCred.length - sigmaCred.toString().split('|')[0].length - 1);
         let fsigmaCred = path.resolve(__dirname, 'data', 'sigmaCred')
         fs.writeFile(fsigmaCred, sigmaCred, err => {})
 
-        var D = '1001'
         console.time('deriveshow')
-        const sigmaShow = await contract.submitTransaction('deriveshow', usk, D, m[0], m[1], m[2], m[3]);
+        const sigmaShow = await contract.submitTransaction('deriveshow', usk, D, ...m);
         console.log('deriveshow transaction has been submitted');
         console.timeEnd('deriveshow')
         console.log('go inner timer: ', sigmaShow.toString().split('|')[0])
-        console.log('length of data: ', sigmaShow.length);
+        // console.log(sigmaShow.toString().split('|')[1])
+        console.log('length of data: ', sigmaShow.length - sigmaShow.toString().split('|')[0].length - 1);
 
         // console.time('credverify')
         // const result = await contract.submitTransaction('credverify', phi);

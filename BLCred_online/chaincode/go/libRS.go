@@ -74,7 +74,7 @@ func (rsvk *RSVK) Bytes() []byte {
 	}
 	n := len(rsvk.VKY)
 	for i := 0; i < n; i++ {
-		for j := 0; j < i; j++ { // 64*(n-1)*(n-2) bytes
+		for j := 0; j < i; j++ { // 64*n*(n-1)/2 bytes
 			binary.Write(buf, binary.BigEndian, rsvk.VKZ[(i+1)*n+j+1].Marshal())
 		}
 	}
@@ -86,7 +86,7 @@ func (rsvk *RSVK) Bytes() []byte {
 //	bits:	int, the bit length of big number used in RSVK, G1bits is 64, G2bits is 128 in this demo.
 //	leny:	int, amount of elements in y
 func (rsvk *RSVK) FromBytes(buf []byte, G1bits int, G2bits int, leny int) bool {
-	if len(buf) < ((G1bits+G2bits)*(leny+1) + G1bits*(leny-1)*(leny-2)) {
+	if len(buf) < ((G1bits+G2bits)*(leny+1) + G1bits*leny*(leny-1)/2) {
 		return false
 	}
 	base := 0
