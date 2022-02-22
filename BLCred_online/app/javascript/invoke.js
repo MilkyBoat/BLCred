@@ -37,7 +37,7 @@ async function main() {
         const contract = network.getContract('blcred');
 
         // data used in test
-        var n = '16'
+        var n = '4'
         var m = ["nezuko", "kawaii", "hhh", "lol2333", "ohhhh", "aha", "blcred", "ohyeah", "nezuko", "kawaii", "hhh", "lol2333", "ohhhh", "aha", "blcred", "ohyeah"].slice(0, n)
         var D = '1001010101001011'.substring(0, n)
 
@@ -95,17 +95,17 @@ async function main() {
         // console.log(sigmaShow.toString().split('|')[1])
         console.log('length of data: ', sigmaShow.length - sigmaShow.toString().split('|')[0].length - 1);
 
-        // console.time('credverify')
-        // const result = await contract.submitTransaction('credverify', phi);
-        // console.log('credverify transaction has been submitted');
-        // console.timeEnd('credverify')
-        // console.log('go inner timer: ', result.toString().split('|')[0])
-        // if (result.toString().split('|')[1] == '1') {
-        //     console.log('credverify successful');
-        // }
-        // else {
-        //     console.log('credverify failure');
-        // }
+        console.time('credverify')
+        const result = await contract.submitTransaction('credverify');
+        console.log('credverify transaction has been submitted');
+        console.timeEnd('credverify')
+        console.log('go inner timer: ', result.toString().split('|')[0])
+        if (result.toString().split('|')[1] == '1') {
+            console.log('credverify successful');
+        }
+        else {
+            console.log('credverify failure');
+        }
 
         // Disconnect from the gateway.
         await gateway.disconnect();

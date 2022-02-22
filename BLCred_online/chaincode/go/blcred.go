@@ -33,27 +33,29 @@ type SigmaShow struct {
 
 func (s *SigmaShow) bytes() []byte {
 	buf := bytes.NewBuffer([]byte{})
-	binary.Write(buf, binary.BigEndian, s.LK.Bytes())         // 8 bytes
+	binary.Write(buf, binary.BigEndian, s.LK.Bytes())         // 32 bytes
 	binary.Write(buf, binary.BigEndian, s.pi.NIZKC.Marshal()) // 128 bytes
 	binary.Write(buf, binary.BigEndian, s.pi.NIZKc.Bytes())   // 8 bytes
 	for _, v := range s.pi.NIZKr {
-		binary.Write(buf, binary.BigEndian, []byte(v.Bytes())) // 32*n bytes
+		binary.Write(buf, binary.BigEndian, v.Bytes()) // 32*n bytes
 	}
+	// return []byte(fmt.Sprintf("%d, %d, %d, %d, %d",
+	// 	len(s.LK.Bytes()), len(s.pi.NIZKC.Marshal()), len(s.pi.NIZKc.Bytes()), len(s.pi.NIZKr[0].Bytes()), buf.Len()))
 	return buf.Bytes()
 }
 
 func (s *SigmaShow) fromBytes(buf []byte) bool {
-	if len(buf) < 176 || (len(buf)-144)%32 != 0 {
+	if len(buf) < 176 || (len(buf)-168)%32 != 0 {
 		return false
 	}
-	s.LK = *big.NewInt(0).SetBytes(buf[:8])
+	s.LK = *big.NewInt(0).SetBytes(buf[:32])
 	s.pi = *new(NIZKPI)
-	s.pi.NIZKC, _ = new(bn256.G2).Unmarshal(buf[8:136])
-	s.pi.NIZKc = big.NewInt(0).SetBytes(buf[136:144])
-	n := (len(buf) - 144) / 32
+	s.pi.NIZKC, _ = new(bn256.G2).Unmarshal(buf[32:160])
+	s.pi.NIZKc = big.NewInt(0).SetBytes(buf[160:168])
+	n := (len(buf) - 168) / 32
 	s.pi.NIZKr = make([]*big.Int, n)
 	for i := 0; i < n; i++ {
-		s.pi.NIZKr[i] = big.NewInt(0).SetBytes(buf[144+i*32 : 144+(i+1)*32])
+		s.pi.NIZKr[i] = big.NewInt(0).SetBytes(buf[168+i*32 : 168+(i+1)*32])
 	}
 	return true
 }
@@ -67,7 +69,7 @@ func (s *SmartContract) Init(APIstub shim.ChaincodeStubInterface) sc.Response {
 func (s *SmartContract) Invoke(APIstub shim.ChaincodeStubInterface) sc.Response {
 
 	function, args := APIstub.GetFunctionAndParameters()
-	payload := []byte("")
+	var payload []byte
 	start := time.Now()
 
 	if function == "setup" {
@@ -88,6 +90,8 @@ func (s *SmartContract) Invoke(APIstub shim.ChaincodeStubInterface) sc.Response 
 		} else {
 			payload = []byte("0")
 		}
+	} else if function == "credverify" {
+		payload = s.credverify(APIstub, args)
 	} else {
 		return shim.Error("Invalid Smart Contract function name.")
 	}
@@ -217,10 +221,6 @@ func (s *SmartContract) unblind(sigmaCred SIGMA, S *big.Int) SIGMA {
 	temp := new(bn256.G2).Neg(sigmaCred.sigma11)
 	temp.ScalarMult(temp, S)
 	sigmaCred.sigma21.Add(sigmaCred.sigma21, temp)
-
-	// temp := new(bn256.G2).ScalarMult(sigmaCred.sigma11, S)
-	// temp.Neg(temp)
-	// sigmaCred.sigma21.Add(sigmaCred.sigma21, temp)
 	return sigmaCred
 }
 
@@ -312,11 +312,10 @@ func (s *SmartContract) deriveshow(APIstub shim.ChaincodeStubInterface, args []s
 	P := uvk
 	Q := make([]*bn256.G2, 1)
 	Q[0] = new(bn256.G2).ScalarBaseMult(big.NewInt(0).Rand(_rand, BLCredP))
-	piNIZK := nizk.ProveK(mi, S, P, Q)
 	APIstub.PutState("Q", Q[0].Marshal())
+	piNIZK := nizk.ProveK(mi, S, P, Q)
 
 	sigmaShow := SigmaShow{*LK, piNIZK}
-
 	sigmaShowb := sigmaShow.bytes()
 	APIstub.PutState("sigmaShow", sigmaShowb)
 
@@ -328,49 +327,36 @@ func (s *SmartContract) link(APIstub shim.ChaincodeStubInterface, args []string)
 	return args[0] == args[1]
 }
 
-// credverify(phi)
-// func (s *SmartContract) credverify(APIstub shim.ChaincodeStubInterface, args []string) []byte {
+// credverify()
+func (s *SmartContract) credverify(APIstub shim.ChaincodeStubInterface, args []string) []byte {
 
-// 	if len(args) != 1 {
-// 		return []byte("Incorrect number of arguments. Expecting 1")
-// 	}
+	// if len(args) != 1 {
+	// 	return []byte("Incorrect number of arguments. Expecting 1")
+	// }
 
-// 	PBytes, _ := APIstub.GetState("BLCred_P")
-// 	BLCredP := big.NewInt(0).SetBytes(PBytes)
+	PBytes, _ := APIstub.GetState("BLCred_P")
+	BLCredP := big.NewInt(0).SetBytes(PBytes)
+	var sigmaShow SigmaShow
+	sigmaShowb, _ := APIstub.GetState("sigmaShow")
+	if !sigmaShow.fromBytes(sigmaShowb) {
+		panic("Decode sigmaShow failure.")
+	}
+	piNIZK := sigmaShow.pi
 
-// 	var sigmaShow SigmaShow
-// 	sigmaShowb, _ := APIstub.GetState("sigmaShow")
-// 	if !sigmaShow.fromBytes(sigmaShowb) {
-// 		return []byte("Decode sigmaShow failure.")
-// 	}
-// 	piNIZK := sigmaShow.pi
+	nizk := new(NIZK)
+	nizk.Init(BLCredP)
+	uvkb, _ := APIstub.GetState("uvk")
+	P, _ := new(bn256.G2).Unmarshal(uvkb)
+	Qb, _ := APIstub.GetState("Q")
+	Q := make([]*bn256.G2, 1)
+	Q[0], _ = new(bn256.G2).Unmarshal(Qb)
+	result := nizk.VerifyK(piNIZK, P, Q)
 
-// 	nizk := new(NIZK)
-// 	nizk.Init(BLCredP)
-// 	Pb, _ := APIstub.GetState("P")
-// 	P, _ := new(bn256.G2).Unmarshal(Pb)
-// 	Q0b, _ := APIstub.GetState("Q")
-// 	Q := make([]*bn256.G2, 1)
-// 	Q[0], _ = new(bn256.G2).Unmarshal(Q0b)
-// 	result1 := nizk.VerifyK(piNIZK, P, Q)
-
-// 	buf := bytes.NewBuffer([]byte{})
-// 	binary.Write(buf, binary.BigEndian, piNIZK.NIZKC.Marshal()) // 128 bytes
-// 	binary.Write(buf, binary.BigEndian, piNIZK.NIZKc.Bytes())   // 8 bytes
-// 	for _, v := range piNIZK.NIZKr {
-// 		binary.Write(buf, binary.BigEndian, []byte(v.Bytes())) // 32*n bytes
-// 	}
-// 	otsvk := string(append(sigmaShow.X.Marshal(), sigmaShow.Y.Marshal()...))
-// 	m := string(buf.Bytes()) + string(args[0]) + otsvk
-
-// 	fbb := new(FBB)
-// 	fbb.Init(BLCredP)
-// 	result2 := fbb.Verify(&sigmaShow.X, &sigmaShow.Y, m, &sigmaShow.sigma, &sigmaShow.r)
-// 	if result1 && result2 {
-// 		return []byte("1")
-// 	}
-// 	return []byte("0")
-// }
+	if result {
+		return []byte("1")
+	}
+	return []byte("0")
+}
 
 func main() {
 
