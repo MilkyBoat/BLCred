@@ -1,6 +1,6 @@
 # BLCred
 
-> implement of paper `BLCred: A Credential-Based Anonymous and User-Centric Identity Management Protocol in Distributed Ledgers`
+> implement of paper `BLCred: User-Centric Decentralized Identities with Anonymity and Accountability atop Distributed Ledgers`
 
 ---
 
